@@ -63,6 +63,7 @@ Set via app settings (Bicep parameters below wire these up automatically):
 src/AzVmStartStop.Functions/         # Function app (timer trigger, services)
 src/AzVmStartStop.Functions.Tests/   # xUnit tests (cron/time zone + power-state logic)
 infra/main.bicep                     # RG-scoped: identity, storage, plan, App Insights, function
+infra/abbreviations.json             # Azure CAF resource-type abbreviations (azd standard)
 infra/main.sample.bicepparam         # Example parameters (placeholders only)
 .github/workflows/deploy.yml         # Build/test + OIDC deploy
 ```

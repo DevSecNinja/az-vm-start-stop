@@ -13,7 +13,7 @@ targetScope = 'resourceGroup'
 @description('Azure region for all resources. Defaults to the resource group location.')
 param location string = resourceGroup().location
 
-@description('Prefix for generated resource names (3-11 lowercase alphanumeric chars).')
+@description('Workload/application name used in Azure CAF resource names (e.g. azvmss). Hyphens are allowed for most types and stripped for the storage account name.')
 @minLength(3)
 @maxLength(11)
 param namePrefix string = 'azvmss'
@@ -35,13 +35,20 @@ param dryRun bool = false
 @description('Optional subscription ids to scan. Empty = the resource group subscription.')
 param subscriptionIds array = []
 
-var suffix = uniqueString(resourceGroup().id)
-var storageAccountName = toLower('${namePrefix}${substring(suffix, 0, 8)}')
-var functionAppName = '${namePrefix}-func-${substring(suffix, 0, 6)}'
-var planName = '${namePrefix}-plan-${substring(suffix, 0, 6)}'
-var identityName = '${namePrefix}-id-${substring(suffix, 0, 6)}'
-var logAnalyticsName = '${namePrefix}-law-${substring(suffix, 0, 6)}'
-var appInsightsName = '${namePrefix}-ai-${substring(suffix, 0, 6)}'
+// Microsoft Cloud Adoption Framework naming: <type-abbreviation>-<workload>-<token>.
+// Abbreviations come from the standard Azure Developer CLI (azd) abbreviations.json;
+// resourceToken keeps names deterministic and unique per resource group. Each name is
+// shaped to its resource type's rules (e.g. storage: lowercase alphanumeric, <=24).
+var abbrs = loadJsonContent('abbreviations.json')
+var resourceToken = toLower(uniqueString(resourceGroup().id))
+var sanitizedPrefix = toLower(replace(replace(namePrefix, '-', ''), '_', ''))
+
+var identityName = '${abbrs.managedIdentityUserAssignedIdentities}${namePrefix}-${resourceToken}'
+var storageAccountName = take('${abbrs.storageStorageAccounts}${sanitizedPrefix}${resourceToken}', 24)
+var functionAppName = '${abbrs.webSitesFunctions}${namePrefix}-${resourceToken}'
+var planName = '${abbrs.webServerFarms}${namePrefix}-${resourceToken}'
+var logAnalyticsName = '${abbrs.operationalInsightsWorkspaces}${namePrefix}-${resourceToken}'
+var appInsightsName = '${abbrs.insightsComponents}${namePrefix}-${resourceToken}'
 var deploymentContainerName = 'app-package'
 
 resource identity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = {
