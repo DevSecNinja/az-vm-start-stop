@@ -1,17 +1,17 @@
-using AzVmStart.Functions.Options;
+using AzVmStartStop.Functions.Options;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using NCrontab;
 
-namespace AzVmStart.Functions.Services;
+namespace AzVmStartStop.Functions.Services;
 
 /// <inheritdoc />
 public sealed class CronScheduleEvaluator : ICronScheduleEvaluator
 {
-    private readonly AutoStartOptions _options;
+    private readonly AutoScheduleOptions _options;
     private readonly ILogger<CronScheduleEvaluator> _logger;
 
-    public CronScheduleEvaluator(IOptions<AutoStartOptions> options, ILogger<CronScheduleEvaluator> logger)
+    public CronScheduleEvaluator(IOptions<AutoScheduleOptions> options, ILogger<CronScheduleEvaluator> logger)
     {
         _options = options.Value;
         _logger = logger;

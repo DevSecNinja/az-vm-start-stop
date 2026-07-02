@@ -15,7 +15,7 @@ permissions:
 
 env:
   DOTNET_VERSION: '8.0.x'
-  FUNCTIONS_PROJECT: src/AzVmStart.Functions
+  FUNCTIONS_PROJECT: src/AzVmStartStop.Functions
   BUILD_CONFIGURATION: Release
 
 jobs:

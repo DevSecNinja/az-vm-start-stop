@@ -1,33 +1,33 @@
-using AzVmStart.Functions.Options;
-using AzVmStart.Functions.Services;
+using AzVmStartStop.Functions.Options;
+using AzVmStartStop.Functions.Services;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
-namespace AzVmStart.Functions;
+namespace AzVmStartStop.Functions;
 
 /// <summary>
-/// Timer-triggered entry point that runs an auto-start pass on a schedule.
+/// Timer-triggered entry point that runs an auto-start/stop pass on a schedule.
 /// The timer cadence is configured via the <c>ScheduleExpression</c> app setting
 /// (6-field NCRONTAB, e.g. <c>0 */5 * * * *</c> = every 5 minutes).
 /// </summary>
-public sealed class AutoStartFunction
+public sealed class ScheduleFunction
 {
-    private readonly IVmAutoStartService _service;
-    private readonly AutoStartOptions _options;
-    private readonly ILogger<AutoStartFunction> _logger;
+    private readonly IVmScheduleService _service;
+    private readonly AutoScheduleOptions _options;
+    private readonly ILogger<ScheduleFunction> _logger;
 
-    public AutoStartFunction(
-        IVmAutoStartService service,
-        IOptions<AutoStartOptions> options,
-        ILogger<AutoStartFunction> logger)
+    public ScheduleFunction(
+        IVmScheduleService service,
+        IOptions<AutoScheduleOptions> options,
+        ILogger<ScheduleFunction> logger)
     {
         _service = service;
         _options = options.Value;
         _logger = logger;
     }
 
-    [Function("AutoStart")]
+    [Function("Schedule")]
     public async Task RunAsync(
         [TimerTrigger("%ScheduleExpression%")] TimerInfo timer,
         CancellationToken cancellationToken)
@@ -40,7 +40,7 @@ public sealed class AutoStartFunction
         var windowStartUtc = ResolveWindowStart(timer, nowUtc);
 
         _logger.LogInformation(
-            "Auto-start triggered at {NowUtc:o}; evaluating window ({WindowStartUtc:o}, {NowUtc:o}].",
+            "Schedule triggered at {NowUtc:o}; evaluating window ({WindowStartUtc:o}, {NowUtc:o}].",
             nowUtc, windowStartUtc, nowUtc);
 
         await _service.RunAsync(windowStartUtc, nowUtc, cancellationToken);

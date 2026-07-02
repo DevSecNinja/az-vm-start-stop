@@ -1,11 +1,12 @@
-# az-vm-start
+# az-vm-start-stop
 
-Tag-driven **auto-start** for Azure Virtual Machines.
+Tag-driven **auto-start and auto-stop** for Azure Virtual Machines.
 
-Azure VMs ship with a native *auto-shutdown* feature but no built-in *auto-start*.
-This project fills that gap with a small, self-owned Azure Function (C# / .NET 8
-isolated worker) that runs on a timer, finds VMs tagged with a start schedule, and
-starts the ones that are due.
+Azure VMs ship with a native *auto-shutdown* feature but no built-in *auto-start*,
+and the native shutdown is a single fixed daily time. This project provides both,
+driven by cron tags: a small, self-owned Azure Function (C# / .NET 8 isolated worker)
+runs on a timer, finds VMs tagged with a start and/or stop schedule, and starts or
+deallocates the ones that are due.
 
 It is intentionally leaner than Microsoft's [Start/Stop VMs v2](https://learn.microsoft.com/azure/azure-functions/start-stop-v2/overview)
 (which is in maintenance-only mode): no Logic Apps, no queues, no classic VM support —
@@ -15,24 +16,28 @@ just a single timer-triggered function using a managed identity.
 
 1. A timer trigger fires on a schedule (default: every 5 minutes).
 2. The function enumerates VMs in scope and reads their tags.
-3. For each VM tagged with `AutoStart`, it evaluates the cron expression in the VM's
-   time zone against the elapsed time window.
-4. VMs that are due **and** currently stopped/deallocated are started via the
-   function's managed identity (`Virtual Machine Contributor`).
-
-Stopping is left to Azure's native auto-shutdown.
+3. For each VM tagged with `AutoStart` and/or `AutoStop`, it evaluates the cron
+   expression in the VM's time zone against the elapsed time window.
+4. VMs due to **start** that are currently stopped/deallocated are started; VMs due to
+   **stop** that are currently running are **deallocated** (stops billing, like the
+   native auto-shutdown). Actions use the function's managed identity
+   (`Virtual Machine Contributor`).
 
 ## Tag schema
 
 | Tag | Required | Description | Example |
 | --- | --- | --- | --- |
-| `AutoStart` | Yes | 5-field cron (`minute hour day-of-month month day-of-week`), evaluated in the VM's time zone. Presence enables auto-start. | `0 7 * * 1-5` |
-| `AutoStartTimeZone` | No | IANA or Windows time zone id. Defaults to **`Europe/Amsterdam`** (configurable). | `Europe/Amsterdam` / `W. Europe Standard Time` |
+| `AutoStart` | No\* | 5-field cron (`minute hour day-of-month month day-of-week`), evaluated in the VM's time zone. Presence enables auto-start. | `0 7 * * 1-5` |
+| `AutoStop` | No\* | 5-field cron. Presence enables auto-stop (deallocate). | `0 19 * * 1-5` |
+| `AutoStartTimeZone` | No | IANA or Windows time zone id for `AutoStart`. Defaults to **`Europe/Amsterdam`** (configurable). | `Europe/Amsterdam` / `W. Europe Standard Time` |
+| `AutoStopTimeZone` | No | Time zone id for `AutoStop`. Defaults to **`Europe/Amsterdam`**. | `UTC` |
+
+\* At least one of `AutoStart` / `AutoStop` must be present for a VM to participate.
 
 Examples:
 
-- Start at 07:00 on weekdays, Amsterdam time (default TZ, so the TZ tag is optional):
-  `AutoStart = 0 7 * * 1-5`
+- Start 07:00 and stop 19:00 on weekdays, Amsterdam time (default TZ, so no TZ tags):
+  `AutoStart = 0 7 * * 1-5`, `AutoStop = 0 19 * * 1-5`
 - Start at 06:30 every day, UTC:
   `AutoStart = 30 6 * * *`, `AutoStartTimeZone = UTC`
 
@@ -47,20 +52,20 @@ Set via app settings (Bicep parameters below wire these up automatically):
 | Setting | Default | Description |
 | --- | --- | --- |
 | `ScheduleExpression` | `0 */5 * * * *` | Timer cadence (6-field NCRONTAB). |
-| `AutoStart:DefaultTimeZone` | `Europe/Amsterdam` | TZ used when a VM has no `AutoStartTimeZone` tag. |
-| `AutoStart:ScheduleWindowMinutes` | `5` | First-run look-back window; keep aligned with the timer cadence. |
-| `AutoStart:DryRun` | `false` | When `true`, logs what would start without starting anything. |
-| `AutoStart:SubscriptionIds` | *(empty)* | Optional subscription ids to scan. Empty = the identity's default subscription. |
+| `AutoSchedule:DefaultTimeZone` | `Europe/Amsterdam` | TZ used when a VM has no per-action time zone tag. |
+| `AutoSchedule:ScheduleWindowMinutes` | `5` | First-run look-back window; keep aligned with the timer cadence. |
+| `AutoSchedule:DryRun` | `false` | When `true`, logs what would start/stop without acting. |
+| `AutoSchedule:SubscriptionIds` | *(empty)* | Optional subscription ids to scan. Empty = the identity's default subscription. |
 
 ## Project layout
 
 ```
-src/AzVmStart.Functions/         # Function app (timer trigger, services)
-src/AzVmStart.Functions.Tests/   # xUnit tests (cron + time zone logic)
-infra/main.bicep                 # Subscription-scope: RG + VM Contributor role
-infra/functionApp.bicep          # Flex Consumption function app + storage + App Insights
-infra/main.sample.bicepparam     # Example parameters (placeholders only)
-.github/workflows/deploy.yml     # Build/test + OIDC deploy
+src/AzVmStartStop.Functions/         # Function app (timer trigger, services)
+src/AzVmStartStop.Functions.Tests/   # xUnit tests (cron/time zone + power-state logic)
+infra/main.bicep                     # Subscription-scope: RG + VM Contributor role
+infra/functionApp.bicep              # Flex Consumption function app + storage + App Insights
+infra/main.sample.bicepparam         # Example parameters (placeholders only)
+.github/workflows/deploy.yml         # Build/test + OIDC deploy
 ```
 
 ## Build & test locally
@@ -73,7 +78,7 @@ dotnet test -c Release
 Run the function locally with the [Azure Functions Core Tools](https://learn.microsoft.com/azure/azure-functions/functions-run-local):
 
 ```bash
-cd src/AzVmStart.Functions
+cd src/AzVmStartStop.Functions
 func start
 ```
 
@@ -125,5 +130,9 @@ func azure functionapp publish <functionAppName>
 
 - DST is handled by evaluating the cron in the VM's time zone, so `0 7 * * 1-5`
   means 07:00 local year-round.
-- Starting an already-running VM is skipped (checked via power state), so overlapping
-  windows are safe.
+- Actions are power-state aware: an already-running VM is not started again and an
+  already-stopped VM is not deallocated, so overlapping windows are safe.
+- `AutoStop` **deallocates** the VM (stops compute billing), matching Azure's native
+  auto-shutdown behaviour.
+- If a VM has both `AutoStart` and `AutoStop` due in the same window, no action is
+  taken (logged as a warning) — keep start and stop times apart.
