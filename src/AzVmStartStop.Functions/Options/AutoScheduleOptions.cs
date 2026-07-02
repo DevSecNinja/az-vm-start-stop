@@ -1,13 +1,13 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace AzVmStart.Functions.Options;
+namespace AzVmStartStop.Functions.Options;
 
 /// <summary>
 /// Bound from the <c>AutoStart</c> configuration section / app settings.
 /// </summary>
-public sealed class AutoStartOptions
+public sealed class AutoScheduleOptions
 {
-    public const string SectionName = "AutoStart";
+    public const string SectionName = "AutoSchedule";
 
     /// <summary>
     /// Time zone used to interpret a VM's cron expression when the VM has no

@@ -110,21 +110,21 @@ var baseAppSettings = [
     value: scheduleExpression
   }
   {
-    name: 'AutoStart:DefaultTimeZone'
+    name: 'AutoSchedule:DefaultTimeZone'
     value: defaultTimeZone
   }
   {
-    name: 'AutoStart:ScheduleWindowMinutes'
+    name: 'AutoSchedule:ScheduleWindowMinutes'
     value: string(scheduleWindowMinutes)
   }
   {
-    name: 'AutoStart:DryRun'
+    name: 'AutoSchedule:DryRun'
     value: string(dryRun)
   }
 ]
 
 var subscriptionIdSettings = [for (id, i) in subscriptionIds: {
-  name: 'AutoStart:SubscriptionIds:${i}'
+  name: 'AutoSchedule:SubscriptionIds:${i}'
   value: id
 }]
 

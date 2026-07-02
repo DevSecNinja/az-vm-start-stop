@@ -1,8 +1,8 @@
 using Azure.Core;
 using Azure.Identity;
 using Azure.ResourceManager;
-using AzVmStart.Functions.Options;
-using AzVmStart.Functions.Services;
+using AzVmStartStop.Functions.Options;
+using AzVmStartStop.Functions.Services;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -14,8 +14,8 @@ var host = new HostBuilder()
         services.AddApplicationInsightsTelemetryWorkerService();
         services.ConfigureFunctionsApplicationInsights();
 
-        services.AddOptions<AutoStartOptions>()
-            .Bind(context.Configuration.GetSection(AutoStartOptions.SectionName))
+        services.AddOptions<AutoScheduleOptions>()
+            .Bind(context.Configuration.GetSection(AutoScheduleOptions.SectionName))
             .ValidateDataAnnotations()
             .ValidateOnStart();
 
@@ -25,7 +25,7 @@ var host = new HostBuilder()
         services.AddSingleton(sp => new ArmClient(sp.GetRequiredService<TokenCredential>()));
 
         services.AddSingleton<ICronScheduleEvaluator, CronScheduleEvaluator>();
-        services.AddSingleton<IVmAutoStartService, VmAutoStartService>();
+        services.AddSingleton<IVmScheduleService, VmScheduleService>();
     })
     .Build();
 

@@ -1,4 +1,4 @@
-namespace AzVmStart.Functions.Services;
+namespace AzVmStartStop.Functions.Services;
 
 /// <summary>
 /// Evaluates whether a cron-based schedule is due within a given UTC time window,

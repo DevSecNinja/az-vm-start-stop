@@ -5,9 +5,9 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{AE46ACD4-D428-469C-8720-6B5F4452F9D6}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AzVmStart.Functions", "src\AzVmStart.Functions\AzVmStart.Functions.csproj", "{C9391E5D-2F90-4EF8-B2D2-CC920F3E1BF9}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AzVmStartStop.Functions", "src\AzVmStartStop.Functions\AzVmStartStop.Functions.csproj", "{C9391E5D-2F90-4EF8-B2D2-CC920F3E1BF9}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AzVmStart.Functions.Tests", "src\AzVmStart.Functions.Tests\AzVmStart.Functions.Tests.csproj", "{90E7127D-7CC3-4FA7-A776-52466432A806}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AzVmStartStop.Functions.Tests", "src\AzVmStartStop.Functions.Tests\AzVmStartStop.Functions.Tests.csproj", "{90E7127D-7CC3-4FA7-A776-52466432A806}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

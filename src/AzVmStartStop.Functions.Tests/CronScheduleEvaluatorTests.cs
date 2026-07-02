@@ -1,16 +1,16 @@
-using AzVmStart.Functions.Options;
-using AzVmStart.Functions.Services;
+using AzVmStartStop.Functions.Options;
+using AzVmStartStop.Functions.Services;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Xunit;
 
-namespace AzVmStart.Functions.Tests;
+namespace AzVmStartStop.Functions.Tests;
 
 public sealed class CronScheduleEvaluatorTests
 {
     private static CronScheduleEvaluator CreateEvaluator(string defaultTz = "Europe/Amsterdam")
     {
-        var options = Microsoft.Extensions.Options.Options.Create(new AutoStartOptions { DefaultTimeZone = defaultTz });
+        var options = Microsoft.Extensions.Options.Options.Create(new AutoScheduleOptions { DefaultTimeZone = defaultTz });
         return new CronScheduleEvaluator(options, NullLogger<CronScheduleEvaluator>.Instance);
     }
 
@@ -36,6 +36,18 @@ public sealed class CronScheduleEvaluatorTests
         var end = new DateTimeOffset(2024, 7, 8, 5, 3, 0, TimeSpan.Zero);
 
         Assert.True(evaluator.IsDue("0 7 * * 1-5", timeZoneId: null, start, end));
+    }
+
+    [Fact]
+    public void IsDue_ReturnsTrue_ForEveningStopSchedule_AmsterdamWinter()
+    {
+        var evaluator = CreateEvaluator();
+
+        // 19:00 Amsterdam (CET, UTC+1) on Mon 2024-01-08 == 18:00 UTC.
+        var start = new DateTimeOffset(2024, 1, 8, 17, 58, 0, TimeSpan.Zero);
+        var end = new DateTimeOffset(2024, 1, 8, 18, 3, 0, TimeSpan.Zero);
+
+        Assert.True(evaluator.IsDue("0 19 * * 1-5", timeZoneId: null, start, end));
     }
 
     [Fact]

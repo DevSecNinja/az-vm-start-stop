@@ -4,7 +4,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
-    <RootNamespace>AzVmStart.Functions.Tests</RootNamespace>
+    <RootNamespace>AzVmStartStop.Functions.Tests</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
@@ -16,6 +16,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\AzVmStart.Functions\AzVmStart.Functions.csproj" />
+    <ProjectReference Include="..\AzVmStartStop.Functions\AzVmStartStop.Functions.csproj" />
   </ItemGroup>
 </Project>
