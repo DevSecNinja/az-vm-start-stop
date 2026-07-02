@@ -64,13 +64,11 @@ jobs:
         id: infra
         uses: azure/arm-deploy@v2
         with:
-          scope: subscription
-          region: ${{ vars.AZURE_LOCATION }}
+          scope: resourcegroup
+          resourceGroupName: ${{ vars.AZURE_RESOURCE_GROUP }}
           template: infra/main.bicep
-          deploymentName: azvmstart-${{ github.run_number }}
+          deploymentName: azvmstartstop-${{ github.run_number }}
           parameters: >-
-            resourceGroupName=${{ vars.AZURE_RESOURCE_GROUP }}
-            location=${{ vars.AZURE_LOCATION }}
             namePrefix=${{ vars.AZURE_NAME_PREFIX }}
 
       - name: Publish function package
