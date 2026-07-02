@@ -47,15 +47,17 @@ Examples:
 
 ## Configuration
 
-Set via app settings (Bicep parameters below wire these up automatically):
+Set via app settings (Bicep parameters below wire these up automatically). Azure
+app-setting names use `__` (double underscore), which .NET maps to the `:` config
+hierarchy at runtime:
 
 | Setting | Default | Description |
 | --- | --- | --- |
 | `ScheduleExpression` | `0 */5 * * * *` | Timer cadence (6-field NCRONTAB). |
-| `AutoSchedule:DefaultTimeZone` | `Europe/Amsterdam` | TZ used when a VM has no per-action time zone tag. |
-| `AutoSchedule:ScheduleWindowMinutes` | `5` | First-run look-back window; keep aligned with the timer cadence. |
-| `AutoSchedule:DryRun` | `false` | When `true`, logs what would start/stop without acting. |
-| `AutoSchedule:SubscriptionIds` | *(empty)* | Optional subscription ids to scan. Empty = the identity's default subscription. |
+| `AutoSchedule__DefaultTimeZone` | `Europe/Amsterdam` | TZ used when a VM has no per-action time zone tag. |
+| `AutoSchedule__ScheduleWindowMinutes` | `5` | First-run look-back window; keep aligned with the timer cadence. |
+| `AutoSchedule__DryRun` | `false` | When `true`, logs what would start/stop without acting. |
+| `AutoSchedule__SubscriptionIds__0`, `__1`, … | *(empty)* | Optional subscription ids to scan. Empty = the identity's default subscription. |
 
 ## Project layout
 
