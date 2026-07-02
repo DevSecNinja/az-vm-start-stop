@@ -97,17 +97,85 @@ Local runs use your developer/Azure CLI credentials (`az login`) via
   start/stop) at subscription scope, and **`Storage Blob Data Owner`** on its own
   storage account.
 
-### One-time GitHub configuration
+### One-time setup: Entra app + GitHub OIDC
 
-Create a Microsoft Entra app (or user-assigned identity) with a **federated credential**
-for this repository, grant it rights to deploy (e.g. `Owner`/`Contributor` +
-`User Access Administrator` on the target subscription so it can create the role
-assignments), then set these **repository variables** (not secrets):
+The deploy workflow signs in to Azure with **workload identity federation** (OIDC) —
+no client secret is ever created or stored. You create a Microsoft Entra app
+registration, add a **federated credential** that trusts this repository's GitHub
+Actions, grant it permission to deploy, and record its ids as GitHub repository
+variables.
+
+> The workflow's `deploy` job runs in the GitHub **`production`** environment, so the
+> federated credential's *subject* must use the `environment:production` form shown
+> below (not a branch subject). Create the environment first under **Settings →
+> Environments → New environment → `production`**.
+
+#### Option A — Azure CLI (recommended)
+
+Run these once, replacing the placeholders. Requires `az` ≥ 2.38 and rights to create
+app registrations and role assignments (e.g. Owner on the subscription).
+
+```bash
+# --- variables ---
+APP_NAME="az-vm-start-stop-deploy"
+REPO="DevSecNinja/az-vm-start-stop"          # owner/repo
+ENVIRONMENT="production"                       # matches the workflow's environment
+SUBSCRIPTION_ID="<your-subscription-id>"
+
+# 1) Create the app registration and its service principal
+APP_ID=$(az ad app create --display-name "$APP_NAME" --query appId -o tsv)
+az ad sp create --id "$APP_ID"
+
+# 2) Add the federated credential trusting this repo's `production` environment
+az ad app federated-credential create --id "$APP_ID" --parameters '{
+  "name": "github-env-production",
+  "issuer": "https://token.actions.githubusercontent.com",
+  "subject": "repo:'"$REPO"':environment:'"$ENVIRONMENT"'",
+  "audiences": ["api://AzureADTokenExchange"]
+}'
+
+# 3) Grant deploy rights. The Bicep is subscription-scoped and creates role
+#    assignments, so the identity needs to both deploy resources AND assign roles.
+#    Simplest: Owner. Least-privilege alternative: Contributor + Role Based Access
+#    Control Administrator (or User Access Administrator).
+SP_OBJECT_ID=$(az ad sp show --id "$APP_ID" --query id -o tsv)
+az role assignment create \
+  --assignee-object-id "$SP_OBJECT_ID" \
+  --assignee-principal-type ServicePrincipal \
+  --role "Owner" \
+  --scope "/subscriptions/$SUBSCRIPTION_ID"
+
+# 4) Print the ids you need for the GitHub variables below
+echo "AZURE_CLIENT_ID=$APP_ID"
+echo "AZURE_TENANT_ID=$(az account show --query tenantId -o tsv)"
+echo "AZURE_SUBSCRIPTION_ID=$SUBSCRIPTION_ID"
+```
+
+#### Option B — Azure portal
+
+1. **Microsoft Entra ID → App registrations → New registration** → name it, register.
+   Note the **Application (client) ID** and **Directory (tenant) ID**.
+2. In the app, **Certificates & secrets → Federated credentials → Add credential**.
+   Choose scenario **GitHub Actions deploying Azure resources** and enter:
+   - Organization: `DevSecNinja`, Repository: `az-vm-start-stop`
+   - Entity type: **Environment**, value: `production`
+
+   This produces the subject `repo:DevSecNinja/az-vm-start-stop:environment:production`
+   with issuer `https://token.actions.githubusercontent.com` and audience
+   `api://AzureADTokenExchange`.
+3. **Subscriptions → your subscription → Access control (IAM) → Add role assignment**
+   → assign **Owner** (or Contributor + Role Based Access Control Administrator) to the
+   app's service principal.
+
+#### GitHub repository variables
+
+Under **Settings → Secrets and variables → Actions → Variables**, set these
+**repository variables** (they are ids, not secrets):
 
 | Variable | Description |
 | --- | --- |
-| `AZURE_CLIENT_ID` | Client (app) id of the federated identity. |
-| `AZURE_TENANT_ID` | Entra tenant id. |
+| `AZURE_CLIENT_ID` | Application (client) id of the Entra app. |
+| `AZURE_TENANT_ID` | Entra directory (tenant) id. |
 | `AZURE_SUBSCRIPTION_ID` | Target subscription id. |
 | `AZURE_LOCATION` | Region, e.g. `westeurope`. |
 | `AZURE_RESOURCE_GROUP` | Resource group name for the function resources. |
