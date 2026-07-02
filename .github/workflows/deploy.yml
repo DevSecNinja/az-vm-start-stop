@@ -1,0 +1,83 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'infra/**'
+      - '.github/workflows/deploy.yml'
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  DOTNET_VERSION: '8.0.x'
+  FUNCTIONS_PROJECT: src/AzVmStart.Functions
+  BUILD_CONFIGURATION: Release
+
+jobs:
+  build-test:
+    name: Build & Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --configuration ${{ env.BUILD_CONFIGURATION }} --no-restore
+
+      - name: Test
+        run: dotnet test --configuration ${{ env.BUILD_CONFIGURATION }} --no-build --verbosity normal
+
+  deploy:
+    name: Deploy
+    needs: build-test
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      # OIDC federated login — no client secret is stored.
+      - name: Azure login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Deploy infrastructure (Bicep)
+        id: infra
+        uses: azure/arm-deploy@v2
+        with:
+          scope: subscription
+          region: ${{ vars.AZURE_LOCATION }}
+          template: infra/main.bicep
+          deploymentName: azvmstart-${{ github.run_number }}
+          parameters: >-
+            resourceGroupName=${{ vars.AZURE_RESOURCE_GROUP }}
+            location=${{ vars.AZURE_LOCATION }}
+            namePrefix=${{ vars.AZURE_NAME_PREFIX }}
+
+      - name: Publish function package
+        run: dotnet publish ${{ env.FUNCTIONS_PROJECT }} --configuration ${{ env.BUILD_CONFIGURATION }} --output ./publish
+
+      - name: Deploy function app
+        uses: azure/functions-action@v1
+        with:
+          app-name: ${{ steps.infra.outputs.functionAppName }}
+          package: ./publish

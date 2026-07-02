@@ -1,0 +1,12 @@
+## .NET build output
+bin/
+obj/
+publish/
+*.user
+
+## Azure Functions local settings (may contain secrets — never commit)
+local.settings.json
+
+## Rider/VS
+.idea/
+.vs/
