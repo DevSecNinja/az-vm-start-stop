@@ -74,8 +74,8 @@ jobs:
             --output json)
 
           runs=$(echo "$result" | jq -r '.tables[0].rows[0][0] // 0')
-          lastRun=$(echo "$result" | jq -r '.tables[0].rows[0][1] // "n/a"')
-          lastSha=$(echo "$result" | jq -r '.tables[0].rows[0][2] // "unknown"')
+          lastRun=$(echo "$result" | jq -r '(.tables[0].rows[0][1] // "") | if . == "" then "n/a" else . end')
+          lastSha=$(echo "$result" | jq -r '(.tables[0].rows[0][2] // "") | if . == "" then "unknown" else . end')
 
           echo "Schedule passes in last ${LOOKBACK_HOURS}h: ${runs} (last: ${lastRun}, BuildSha: ${lastSha})"
 
