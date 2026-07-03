@@ -23,5 +23,17 @@
       matchPackageNames: ["Microsoft.Azure.Functions.Worker.Extensions.Timer"],
       abandonmentThreshold: "10 years",
     },
+    {
+      // Azure Functions Worker v2 broke the function at runtime on the Linux
+      // Flex Consumption host (scheduled passes stopped executing, caught by the
+      // nightly stability check). Stay on v1 until v2 is verified to run there.
+      matchDatasources: ["nuget"],
+      matchPackageNames: [
+        "Microsoft.Azure.Functions.Worker",
+        "Microsoft.Azure.Functions.Worker.Sdk",
+        "Microsoft.Azure.Functions.Worker.ApplicationInsights",
+      ],
+      allowedVersions: "<2.0.0",
+    },
   ],
 }
