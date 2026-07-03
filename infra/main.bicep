@@ -32,7 +32,7 @@ param scheduleWindowMinutes int = 5
 @description('When true, evaluate and log without starting/stopping any VM.')
 param dryRun bool = false
 
-@description('Optional subscription ids to scan. Empty = the resource group subscription.')
+@description('Optional subscription ids to scan. Empty = all subscriptions accessible to the identity.')
 param subscriptionIds array = []
 
 // Microsoft Cloud Adoption Framework naming: <type-abbreviation>-<workload>-<token>.
