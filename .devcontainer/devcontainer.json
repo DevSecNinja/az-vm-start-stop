@@ -1,12 +1,22 @@
 {
-  "name": "Template Devcontainer",
+  "name": "az-vm-start-stop",
   "image": "ghcr.io/devsecninja/dotfiles-devcontainer:v0.6.0@sha256:238aec66927da1d67f7f7225123c1d207f7c01c93d451fab7189c94d53453940",
-  "postCreateCommand": "",
+  "features": {
+    "ghcr.io/devcontainers/features/dotnet:2": {
+      "version": "8.0"
+    },
+    "ghcr.io/devcontainers/features/azure-cli:1": {},
+    "ghcr.io/devcontainers-extra/features/azure-functions-core-tools:1": {}
+  },
+  "postCreateCommand": "az bicep install && dotnet restore",
   "customizations": {
     "vscode": {
       "extensions": [
         "DavidAnson.vscode-markdownlint",
-        "GitHub.vscode-pull-request-github"
+        "GitHub.vscode-pull-request-github",
+        "ms-dotnettools.csharp",
+        "ms-azuretools.vscode-azurefunctions",
+        "ms-azuretools.vscode-bicep"
       ]
     }
   }
