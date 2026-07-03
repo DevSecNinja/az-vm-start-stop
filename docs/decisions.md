@@ -86,3 +86,22 @@ CLI** and **Azure Functions Core Tools**, plus C#/Functions/Bicep extensions.
 
 **Why.** The base dotfiles image ships general tooling but not this service's
 toolchain, so `dotnet`, `func` and `az` were unavailable for local development.
+
+## 8. No VNet integration / private networking
+
+**Decision.** The Function App and its storage account keep public networking
+(no VNet integration, no private endpoints, no default-deny storage firewall).
+Related checkov findings (`CKV_AZURE_35`, `CKV_AZURE_222`, etc.) are documented
+as intentional `//checkov:skip` suppressions in `infra/main.bicep`.
+
+**Why.** VNet integration on Flex Consumption is technically supported, but it
+requires a delegated subnet plus Private Endpoint resources, which add ongoing
+cost and operational complexity aimed at production/regulated workloads. This is
+a lean, low-stakes personal deployment: a timer-only function with no inbound
+HTTP surface, whose storage is already hardened (TLS 1.2, HTTPS-only,
+identity-based access with no shared key, no public blob). The added networking
+cost/complexity is not justified here.
+
+**Revisit if.** The workload moves to a production/regulated tenant, or storage
+must be reachable only privately. Tracking: closed issue #28.
+
