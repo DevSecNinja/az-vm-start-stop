@@ -9,7 +9,8 @@ set -euo pipefail
 
 install_functions_core_tools() {
     if command -v func >/dev/null 2>&1; then
-        echo "Azure Functions Core Tools already present: $(func --version)"
+        func_version=$(func --version)
+        echo "Azure Functions Core Tools already present: ${func_version}"
         return
     fi
 

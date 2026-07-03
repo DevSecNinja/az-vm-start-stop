@@ -27,4 +27,5 @@ if [ "${sub_count:-0}" -lt 1 ]; then
     echo "::error::Azure login succeeded but the identity has access to no enabled subscriptions."
     exit 1
 fi
-echo "Azure login OK — ${sub_count} accessible subscription(s); active: $(az account show --query name --output tsv)."
+active_sub=$(az account show --query name --output tsv)
+echo "Azure login OK — ${sub_count} accessible subscription(s); active: ${active_sub}."
