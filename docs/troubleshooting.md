@@ -6,13 +6,13 @@ properties so you can filter precisely.
 
 ## Structured properties (`customDimensions`)
 
-| Property | Where | Use |
-| --- | --- | --- |
-| `RunId` | every line in a pass | Group all logs for a single invocation. |
-| `BuildSha` | every line in a pass | Short commit SHA of the deployed function version that wrote the log. |
-| `VmName`, `ResourceGroup`, `SubscriptionId`, `VmId` | per-VM lines | Filter to one VM. |
-| `Action` | during a start/stop | `Start` or `Stop`. |
-| `DryRun`, `WindowStartUtc`, `WindowEndUtc` | pass scope | Run context. |
+| Property                                            | Where                | Use                                                                   |
+| --------------------------------------------------- | -------------------- | --------------------------------------------------------------------- |
+| `RunId`                                             | every line in a pass | Group all logs for a single invocation.                               |
+| `BuildSha`                                          | every line in a pass | Short commit SHA of the deployed function version that wrote the log. |
+| `VmName`, `ResourceGroup`, `SubscriptionId`, `VmId` | per-VM lines         | Filter to one VM.                                                     |
+| `Action`                                            | during a start/stop  | `Start` or `Stop`.                                                    |
+| `DryRun`, `WindowStartUtc`, `WindowEndUtc`          | pass scope           | Run context.                                                          |
 
 ## Key queries
 
@@ -103,7 +103,7 @@ removal must run **after** `ConfigureFunctionsApplicationInsights()` in
 The `Nightly Stability Check` workflow (`.github/workflows/nightly-stability-check.yml`)
 runs daily: it queries Application Insights for `Schedule pass complete` traces
 in the last ~26h and **fails if there were none**, which would indicate the
-function stopped running. It only checks that passes *executed* — not that any
+function stopped running. It only checks that passes _executed_ — not that any
 VM was started/stopped, since VM cron schedules aren't guaranteed to fall in the
 window. It also reports the latest `BuildSha` seen, confirming which deployed
 version is live. Run it on demand from the Actions tab (workflow_dispatch).

@@ -18,7 +18,7 @@ rights.
   account (an in-RG assignment, so RG Owner can create it).
 - The broad **`Virtual Machine Contributor`** grant — which lets the function start/stop
   VMs across other resource groups and subscriptions — is **not** created by the
-  deployment. Because it targets a scope *above* the RG (management group or
+  deployment. Because it targets a scope _above_ the RG (management group or
   subscription), it is a one-time assignment performed by an administrator (see
   step 3 below). This keeps the CI identity limited to Owner on one RG.
 
@@ -32,7 +32,7 @@ GitHub repository variables. Separately, an administrator grants the function's
 identity `Virtual Machine Contributor` at management-group scope (step 3).
 
 > The workflow's `deploy` job runs in the GitHub **`production`** environment, so the
-> federated credential's *subject* must use the `environment:production` form shown
+> federated credential's _subject_ must use the `environment:production` form shown
 > below (not a branch subject). Create the environment first under **Settings →
 > Environments → New environment → `production`**.
 
@@ -126,13 +126,13 @@ az role assignment create \
 Under **Settings → Secrets and variables → Actions → Variables**, set these
 **repository variables** (they are ids, not secrets):
 
-| Variable | Description |
-| --- | --- |
-| `AZURE_CLIENT_ID` | Application (client) id of the Entra app (the deploy identity). |
-| `AZURE_TENANT_ID` | Entra directory (tenant) id. |
-| `AZURE_SUBSCRIPTION_ID` | Subscription containing the pre-created resource group. |
-| `AZURE_RESOURCE_GROUP` | Pre-created resource group name for the function resources. |
-| `AZURE_NAME_PREFIX` | 3–11 lowercase alphanumeric prefix for resource names. |
+| Variable                | Description                                                     |
+| ----------------------- | --------------------------------------------------------------- |
+| `AZURE_CLIENT_ID`       | Application (client) id of the Entra app (the deploy identity). |
+| `AZURE_TENANT_ID`       | Entra directory (tenant) id.                                    |
+| `AZURE_SUBSCRIPTION_ID` | Subscription containing the pre-created resource group.         |
+| `AZURE_RESOURCE_GROUP`  | Pre-created resource group name for the function resources.     |
+| `AZURE_NAME_PREFIX`     | 3–11 lowercase alphanumeric prefix for resource names.          |
 
 Push to `main` (or run the workflow manually) to build, test, and deploy.
 

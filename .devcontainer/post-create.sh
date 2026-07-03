@@ -20,11 +20,11 @@ install_functions_core_tools() {
 
     sudo apt-get update
     sudo apt-get install -y curl gnupg apt-transport-https ca-certificates
-    curl -fsSL https://packages.microsoft.com/keys/microsoft.asc \
-        | gpg --dearmor \
-        | sudo tee /etc/apt/trusted.gpg.d/microsoft.gpg >/dev/null
-    echo "deb [arch=amd64] https://packages.microsoft.com/debian/${version_major}/prod ${VERSION_CODENAME} main" \
-        | sudo tee /etc/apt/sources.list.d/dotnetdev.list >/dev/null
+    curl -fsSL https://packages.microsoft.com/keys/microsoft.asc |
+        gpg --dearmor |
+        sudo tee /etc/apt/trusted.gpg.d/microsoft.gpg >/dev/null
+    echo "deb [arch=amd64] https://packages.microsoft.com/debian/${version_major}/prod ${VERSION_CODENAME} main" |
+        sudo tee /etc/apt/sources.list.d/dotnetdev.list >/dev/null
     sudo apt-get update
     sudo apt-get install -y azure-functions-core-tools-4
 }

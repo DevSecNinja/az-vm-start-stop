@@ -1,8 +1,10 @@
+---
 name: CI & Deploy
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
     paths:
       - 'src/**'
       - 'infra/**'
@@ -87,7 +89,8 @@ jobs:
         run: bash .github/scripts/deploy-infra.sh
 
       - name: Publish function package
-        run: dotnet publish ${{ env.FUNCTIONS_PROJECT }} --configuration ${{ env.BUILD_CONFIGURATION }} --output ./publish -p:SourceRevisionId=${{ github.sha }}
+        run: dotnet publish ${{ env.FUNCTIONS_PROJECT }} --configuration ${{ env.BUILD_CONFIGURATION }} --output ./publish
+          -p:SourceRevisionId=${{ github.sha }}
 
       - name: Deploy function app
         uses: azure/functions-action@bc63708cc6539760eea18d8a7de4ce8ef5fdf593 # v1.5.6

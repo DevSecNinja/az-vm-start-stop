@@ -31,4 +31,4 @@ if [ -z "${function_app_name}" ]; then
     exit 1
 fi
 echo "Infrastructure deployed; functionAppName=${function_app_name}."
-echo "functionAppName=${function_app_name}" >> "${GITHUB_OUTPUT}"
+echo "functionAppName=${function_app_name}" >>"${GITHUB_OUTPUT}"
