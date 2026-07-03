@@ -32,55 +32,9 @@ jobs:
           AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
           AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
           AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
-        run: |
-          idToken=$(curl -sS --fail \
-            -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
-            "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=api://AzureADTokenExchange" \
-            | jq -r '.value')
-          if [ -z "$idToken" ] || [ "$idToken" = "null" ]; then
-            echo "::error::Failed to obtain a GitHub OIDC token for Azure login."
-            exit 1
-          fi
-          az login --service-principal \
-            --username "$AZURE_CLIENT_ID" \
-            --tenant "$AZURE_TENANT_ID" \
-            --federated-token "$idToken" \
-            --output none
-          az account set --subscription "$AZURE_SUBSCRIPTION_ID"
+        run: bash .github/scripts/azure-login.sh
 
       - name: Check for recent schedule passes
         env:
           AZURE_RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP }}
-        run: |
-          az extension add --name application-insights --only-show-errors
-
-          appName=$(az resource list \
-            --resource-group "$AZURE_RESOURCE_GROUP" \
-            --resource-type Microsoft.Insights/components \
-            --query "[0].name" --output tsv)
-          if [ -z "$appName" ]; then
-            echo "::error::No Application Insights component found in resource group '$AZURE_RESOURCE_GROUP'."
-            exit 1
-          fi
-          echo "Querying Application Insights component '$appName' over the last ${LOOKBACK_HOURS}h..."
-
-          query="traces | where timestamp > ago(${LOOKBACK_HOURS}h) | where message has 'Schedule pass complete' | summarize runs = count(), (lastRun, lastSha) = arg_max(timestamp, tostring(customDimensions.BuildSha))"
-
-          result=$(az monitor app-insights query \
-            --app "$appName" \
-            --resource-group "$AZURE_RESOURCE_GROUP" \
-            --analytics-query "$query" \
-            --offset "${LOOKBACK_HOURS}h" \
-            --output json)
-
-          runs=$(echo "$result" | jq -r '.tables[0].rows[0][0] // 0')
-          lastRun=$(echo "$result" | jq -r '(.tables[0].rows[0][1] // "") | if . == "" then "n/a" else . end')
-          lastSha=$(echo "$result" | jq -r '(.tables[0].rows[0][2] // "") | if . == "" then "unknown" else . end')
-
-          echo "Schedule passes in last ${LOOKBACK_HOURS}h: ${runs} (last: ${lastRun}, BuildSha: ${lastSha})"
-
-          if [ "${runs:-0}" -lt 1 ]; then
-            echo "::error::No 'Schedule pass complete' traces in the last ${LOOKBACK_HOURS}h — the function may not be running."
-            exit 1
-          fi
-          echo "Stability check passed: ${runs} schedule pass(es) recently; latest running BuildSha=${lastSha}."
+        run: bash .github/scripts/check-stability.sh

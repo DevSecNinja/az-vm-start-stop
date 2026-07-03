@@ -7,11 +7,13 @@ on:
       - 'src/**'
       - 'infra/**'
       - '.github/workflows/deploy.yml'
+      - '.github/scripts/**'
   pull_request:
     paths:
       - 'src/**'
       - 'infra/**'
       - '.github/workflows/deploy.yml'
+      - '.github/scripts/**'
   workflow_dispatch:
 
 permissions:
@@ -70,69 +72,19 @@ jobs:
           AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
           AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
           AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
-        run: |
-          idToken=$(curl -sS --fail \
-            -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
-            "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=api://AzureADTokenExchange" \
-            | jq -r '.value')
-          if [ -z "$idToken" ] || [ "$idToken" = "null" ]; then
-            echo "::error::Failed to obtain a GitHub OIDC token for Azure login."
-            exit 1
-          fi
-          az login --service-principal \
-            --username "$AZURE_CLIENT_ID" \
-            --tenant "$AZURE_TENANT_ID" \
-            --federated-token "$idToken" \
-            --output none
-          az account set --subscription "$AZURE_SUBSCRIPTION_ID"
-          # Confirm the login actually yielded usable access.
-          subCount=$(az account list --query "length([?state=='Enabled'])" --output tsv)
-          if [ "${subCount:-0}" -lt 1 ]; then
-            echo "::error::Azure login succeeded but the deploy identity has access to no enabled subscriptions."
-            exit 1
-          fi
-          echo "Azure login OK — ${subCount} accessible subscription(s); active: $(az account show --query name --output tsv)."
+        run: bash .github/scripts/azure-login.sh
 
       - name: Verify resource group exists
         env:
           AZURE_RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP }}
-        run: |
-          if [ "$(az group exists --name "$AZURE_RESOURCE_GROUP")" != "true" ]; then
-            echo "::error::Resource group '$AZURE_RESOURCE_GROUP' does not exist. This deployment is resource-group scoped and does not create it — pre-create the group first (see docs/deployment.md)."
-            exit 1
-          fi
-          echo "Resource group '$AZURE_RESOURCE_GROUP' found."
+        run: bash .github/scripts/verify-resource-group.sh
 
       - name: Deploy infrastructure (Bicep)
         id: infra
         env:
           AZURE_RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP }}
           AZURE_NAME_PREFIX: ${{ vars.AZURE_NAME_PREFIX }}
-        run: |
-          deploymentName="azvmstartstop-${{ github.run_number }}"
-          if ! outputs=$(az deployment group create \
-            --resource-group "$AZURE_RESOURCE_GROUP" \
-            --name "$deploymentName" \
-            --template-file infra/main.bicep \
-            --parameters namePrefix="$AZURE_NAME_PREFIX" \
-            --query 'properties.outputs' \
-            --output json); then
-            echo "::error::Bicep deployment '$deploymentName' failed. Failed operations:"
-            az deployment operation group list \
-              --resource-group "$AZURE_RESOURCE_GROUP" \
-              --name "$deploymentName" \
-              --query "[?properties.provisioningState=='Failed'].{resource:properties.targetResource.resourceType, code:properties.statusMessage.error.code, message:properties.statusMessage.error.message}" \
-              --output json || true
-            exit 1
-          fi
-          functionAppName=$(echo "$outputs" | jq -r '.functionAppName.value // empty')
-          if [ -z "$functionAppName" ]; then
-            echo "::error::Bicep deployment '$deploymentName' succeeded but returned no functionAppName output. Outputs were:"
-            echo "$outputs"
-            exit 1
-          fi
-          echo "Infrastructure deployed; functionAppName=${functionAppName}."
-          echo "functionAppName=$functionAppName" >> "$GITHUB_OUTPUT"
+        run: bash .github/scripts/deploy-infra.sh
 
       - name: Publish function package
         run: dotnet publish ${{ env.FUNCTIONS_PROJECT }} --configuration ${{ env.BUILD_CONFIGURATION }} --output ./publish -p:SourceRevisionId=${{ github.sha }}
