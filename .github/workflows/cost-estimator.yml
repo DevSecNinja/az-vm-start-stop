@@ -8,8 +8,6 @@ on:
       - '.github/workflows/cost-estimator.yml'
       - '.github/scripts/azure-login.sh'
       - '.github/scripts/verify-resource-group.sh'
-      - '.github/scripts/install-ace.sh'
-      - '.github/scripts/estimate-infra-cost.sh'
   workflow_dispatch:
 
 permissions:
@@ -51,12 +49,32 @@ jobs:
           AZURE_RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP }}
         run: bash .github/scripts/verify-resource-group.sh
 
-      - name: Install Azure Cost Estimator
-        run: bash .github/scripts/install-ace.sh
+      - name: Prepare report directory
+        run: mkdir -p "${RUNNER_TEMP}/ace-report"
 
       - name: Estimate infrastructure cost
-        env:
-          AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
-          AZURE_RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP }}
-          AZURE_NAME_PREFIX: ${{ vars.AZURE_NAME_PREFIX }}
-        run: bash .github/scripts/estimate-infra-cost.sh
+        uses: TheCloudTheory/azure-cost-estimator-action@0ffde68fc769a28e5c5b5b60885e8305047c42bf # 0.0.15-preview
+        with:
+          template-file: infra/main.bicep
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+          resource-group-name: ${{ vars.AZURE_RESOURCE_GROUP }}
+          inline-parameters: '{"namePrefix":"${{ vars.AZURE_NAME_PREFIX }}"}'
+          generate-json-output: 'true'
+          json-output-filename: ${{ runner.temp }}/ace-report/estimate.json
+          stdout: 'true'
+          output-format: Table
+
+      - name: Publish cost summary
+        shell: bash
+        run: |
+          json_report="${RUNNER_TEMP}/ace-report/estimate.json"
+          if [[ -f "${json_report}" ]]; then
+            {
+              echo '## Azure cost estimate'
+              echo
+              echo '```json'
+              cat "${json_report}"
+              echo
+              echo '```'
+            } >>"${GITHUB_STEP_SUMMARY}"
+          fi

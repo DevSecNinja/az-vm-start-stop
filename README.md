@@ -96,7 +96,7 @@ dotnet test -c Release
 
 Infrastructure pull requests that touch `infra/**` also run the **Cost
 Estimator** workflow, which uses the repo's GitHub OIDC Azure identity and
-publishes an ACE (Azure Cost Estimator) Markdown summary for `infra/main.bicep`.
+publishes an ACE (Azure Cost Estimator) summary for `infra/main.bicep`.
 
 Run the function locally with the [Azure Functions Core Tools](https://learn.microsoft.com/azure/azure-functions/functions-run-local):
 
