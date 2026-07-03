@@ -27,6 +27,9 @@ public sealed class CronScheduleEvaluator : ICronScheduleEvaluator
 
         if (windowEndUtc <= windowStartUtc)
         {
+            _logger.LogWarning(
+                "Cannot evaluate cron '{CronExpression}': window end {WindowEndUtc:o} is not after window start {WindowStartUtc:o}.",
+                cronExpression.Trim(), windowEndUtc, windowStartUtc);
             return false;
         }
 
@@ -48,7 +51,21 @@ public sealed class CronScheduleEvaluator : ICronScheduleEvaluator
         // yields the first occurrence strictly after the window start. If it
         // falls on/before the window end, at least one occurrence is due.
         var next = parseResult.GetNextOccurrence(startLocal);
-        return next <= endLocal;
+        var due = next <= endLocal;
+
+        _logger.LogInformation(
+            "Evaluated cron '{CronExpression}' in time zone '{TimeZoneId}' (UTC offset {UtcOffset}): " +
+            "local window ({StartLocal:yyyy-MM-dd HH:mm:ss}, {EndLocal:yyyy-MM-dd HH:mm:ss}], " +
+            "next occurrence {NextOccurrence:yyyy-MM-dd HH:mm:ss} => due={Due}.",
+            cronExpression.Trim(),
+            timeZone.Id,
+            timeZone.GetUtcOffset(windowEndUtc),
+            startLocal,
+            endLocal,
+            next,
+            due);
+
+        return due;
     }
 
     /// <inheritdoc />

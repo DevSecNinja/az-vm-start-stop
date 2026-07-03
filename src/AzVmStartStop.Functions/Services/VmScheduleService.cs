@@ -50,109 +50,145 @@ public sealed class VmScheduleService : IVmScheduleService
 
         await foreach (var subscription in GetSubscriptionsAsync(cancellationToken))
         {
-            await foreach (var vm in subscription.GetVirtualMachinesAsync(cancellationToken: cancellationToken))
+            var subscriptionId = subscription.Id?.SubscriptionId ?? subscription.Id?.ToString() ?? "(unknown)";
+            _logger.LogInformation("Scanning subscription '{SubscriptionId}' for virtual machines.", subscriptionId);
+
+            try
             {
-                scanned++;
-                var name = vm.Id.Name;
-
-                using var vmScope = _logger.BeginScope(new Dictionary<string, object>
+                await foreach (var vm in subscription.GetVirtualMachinesAsync(cancellationToken: cancellationToken))
                 {
-                    ["VmName"] = name,
-                    ["ResourceGroup"] = vm.Id.ResourceGroupName ?? string.Empty,
-                    ["SubscriptionId"] = vm.Id.SubscriptionId ?? string.Empty,
-                    ["VmId"] = vm.Id.ToString(),
-                });
+                    scanned++;
+                    var name = vm.Id.Name;
 
-                var tags = vm.Data.Tags;
-                if (tags is null)
-                {
-                    _logger.LogDebug("VM '{VmName}' has no tags; skipping.", name);
-                    continue;
-                }
+                    using var vmScope = _logger.BeginScope(new Dictionary<string, object>
+                    {
+                        ["VmName"] = name,
+                        ["ResourceGroup"] = vm.Id.ResourceGroupName ?? string.Empty,
+                        ["SubscriptionId"] = vm.Id.SubscriptionId ?? string.Empty,
+                        ["VmId"] = vm.Id.ToString(),
+                    });
 
-                var startDue = IsDue(tags, TagNames.AutoStart, TagNames.AutoStartTimeZone, windowStartUtc, windowEndUtc);
-                var stopDue = IsDue(tags, TagNames.AutoStop, TagNames.AutoStopTimeZone, windowStartUtc, windowEndUtc);
+                    var tags = vm.Data.Tags;
+                    var tagKeys = tags is { Count: > 0 } ? string.Join(", ", tags.Keys) : "(none)";
 
-                if (!startDue && !stopDue)
-                {
-                    _logger.LogDebug(
-                        "VM '{VmName}' has no AutoStart/AutoStop occurrence due in this window; skipping.",
-                        name);
-                    continue;
-                }
+                    if (tags is null || tags.Count == 0)
+                    {
+                        _logger.LogInformation("Scanned VM '{VmName}'; it has no tags, so nothing to do.", name);
+                        continue;
+                    }
 
-                if (startDue && stopDue)
-                {
-                    _logger.LogWarning(
-                        "VM '{VmName}' has both AutoStart and AutoStop due in the same window; skipping to avoid conflicting actions.",
-                        name);
-                    skipped++;
-                    continue;
-                }
+                    tags.TryGetValue(TagNames.AutoStart, out var autoStartCron);
+                    tags.TryGetValue(TagNames.AutoStop, out var autoStopCron);
+                    tags.TryGetValue(TagNames.AutoStartTimeZone, out var autoStartTz);
+                    tags.TryGetValue(TagNames.AutoStopTimeZone, out var autoStopTz);
 
-                var action = startDue ? "Start" : "Stop";
-                using var actionScope = _logger.BeginScope(new Dictionary<string, object>
-                {
-                    ["Action"] = action,
-                });
-
-                try
-                {
-                    var powerState = await GetPowerStateAsync(vm, cancellationToken);
                     _logger.LogInformation(
-                        "VM '{VmName}' is due to {Action}; current power state is '{PowerState}'.",
-                        name, action, powerState ?? "unknown");
+                        "Scanned VM '{VmName}'; tags=[{TagKeys}]; AutoStart='{AutoStart}' (tz='{AutoStartTz}'), " +
+                        "AutoStop='{AutoStop}' (tz='{AutoStopTz}'). Evaluating due schedules next.",
+                        name,
+                        tagKeys,
+                        autoStartCron ?? "(absent)",
+                        autoStartTz ?? "(default)",
+                        autoStopCron ?? "(absent)",
+                        autoStopTz ?? "(default)");
 
-                    if (startDue)
+                    var startDue = IsDue(tags, TagNames.AutoStart, TagNames.AutoStartTimeZone, windowStartUtc, windowEndUtc);
+                    var stopDue = IsDue(tags, TagNames.AutoStop, TagNames.AutoStopTimeZone, windowStartUtc, windowEndUtc);
+
+                    if (!startDue && !stopDue)
                     {
-                        if (!VmPowerState.ShouldStart(powerState))
-                        {
-                            _logger.LogInformation("VM '{VmName}' is due to start but is '{PowerState}'; skipping.", name, powerState);
-                            skipped++;
-                            continue;
-                        }
+                        _logger.LogInformation(
+                            "VM '{VmName}' has no AutoStart/AutoStop occurrence due in this window; nothing to do.",
+                            name);
+                        continue;
+                    }
 
-                        if (_options.DryRun)
+                    if (startDue && stopDue)
+                    {
+                        _logger.LogWarning(
+                            "VM '{VmName}' has both AutoStart and AutoStop due in the same window; skipping to avoid conflicting actions.",
+                            name);
+                        skipped++;
+                        continue;
+                    }
+
+                    var action = startDue ? "Start" : "Stop";
+                    using var actionScope = _logger.BeginScope(new Dictionary<string, object>
+                    {
+                        ["Action"] = action,
+                    });
+
+                    try
+                    {
+                        var powerState = await GetPowerStateAsync(vm, cancellationToken);
+                        _logger.LogInformation(
+                            "VM '{VmName}' is due to {Action}; current power state is '{PowerState}'.",
+                            name, action, powerState ?? "unknown");
+
+                        if (startDue)
                         {
-                            _logger.LogInformation("[DryRun] Would start VM '{VmName}'.", name);
+                            if (!VmPowerState.ShouldStart(powerState))
+                            {
+                                _logger.LogInformation("VM '{VmName}' is due to start but is '{PowerState}'; skipping.", name, powerState);
+                                skipped++;
+                                continue;
+                            }
+
+                            if (_options.DryRun)
+                            {
+                                _logger.LogInformation("[DryRun] Would start VM '{VmName}'.", name);
+                                started++;
+                                continue;
+                            }
+
+                            _logger.LogInformation("Starting VM '{VmName}'.", name);
+                            await vm.PowerOnAsync(Azure.WaitUntil.Started, cancellationToken);
                             started++;
-                            continue;
                         }
-
-                        _logger.LogInformation("Starting VM '{VmName}'.", name);
-                        await vm.PowerOnAsync(Azure.WaitUntil.Started, cancellationToken);
-                        started++;
-                    }
-                    else // stopDue
-                    {
-                        if (!VmPowerState.ShouldStop(powerState))
+                        else // stopDue
                         {
-                            _logger.LogInformation("VM '{VmName}' is due to stop but is '{PowerState}'; skipping.", name, powerState);
-                            skipped++;
-                            continue;
-                        }
+                            if (!VmPowerState.ShouldStop(powerState))
+                            {
+                                _logger.LogInformation("VM '{VmName}' is due to stop but is '{PowerState}'; skipping.", name, powerState);
+                                skipped++;
+                                continue;
+                            }
 
-                        if (_options.DryRun)
-                        {
-                            _logger.LogInformation("[DryRun] Would deallocate VM '{VmName}'.", name);
+                            if (_options.DryRun)
+                            {
+                                _logger.LogInformation("[DryRun] Would deallocate VM '{VmName}'.", name);
+                                stopped++;
+                                continue;
+                            }
+
+                            _logger.LogInformation("Deallocating VM '{VmName}'.", name);
+                            await vm.DeallocateAsync(Azure.WaitUntil.Started, cancellationToken: cancellationToken);
                             stopped++;
-                            continue;
                         }
-
-                        _logger.LogInformation("Deallocating VM '{VmName}'.", name);
-                        await vm.DeallocateAsync(Azure.WaitUntil.Started, cancellationToken: cancellationToken);
-                        stopped++;
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        throw;
+                    }
+                    catch (Exception ex)
+                    {
+                        failed++;
+                        _logger.LogError(ex, "Failed to {Action} VM '{VmName}'.", action, name);
                     }
                 }
-                catch (OperationCanceledException)
-                {
-                    throw;
-                }
-                catch (Exception ex)
-                {
-                    failed++;
-                    _logger.LogError(ex, "Failed to {Action} VM '{VmName}'.", action, name);
-                }
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                failed++;
+                _logger.LogError(
+                    ex,
+                    "Failed to list or process virtual machines in subscription '{SubscriptionId}'. " +
+                    "This is often a permissions issue on the function's managed identity.",
+                    subscriptionId);
             }
         }
 
@@ -184,9 +220,16 @@ public sealed class VmScheduleService : IVmScheduleService
     {
         if (_options.SubscriptionIds.Length == 0)
         {
+            _logger.LogInformation(
+                "No SubscriptionIds configured; using the managed identity's default subscription.");
             yield return await _armClient.GetDefaultSubscriptionAsync(cancellationToken);
             yield break;
         }
+
+        _logger.LogInformation(
+            "Using {Count} configured subscription(s): {SubscriptionIds}.",
+            _options.SubscriptionIds.Length,
+            string.Join(", ", _options.SubscriptionIds));
 
         foreach (var subscriptionId in _options.SubscriptionIds)
         {
