@@ -221,8 +221,13 @@ public sealed class VmScheduleService : IVmScheduleService
         if (_options.SubscriptionIds.Length == 0)
         {
             _logger.LogInformation(
-                "No SubscriptionIds configured; using the managed identity's default subscription.");
-            yield return await _armClient.GetDefaultSubscriptionAsync(cancellationToken);
+                "No SubscriptionIds configured; scanning all subscriptions accessible to the managed identity.");
+
+            await foreach (var subscription in _armClient.GetSubscriptions().GetAllAsync(cancellationToken))
+            {
+                yield return subscription;
+            }
+
             yield break;
         }
 

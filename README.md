@@ -57,7 +57,7 @@ hierarchy at runtime:
 | `AutoSchedule__DefaultTimeZone` | `Europe/Amsterdam` | TZ used when a VM has no per-action time zone tag. |
 | `AutoSchedule__ScheduleWindowMinutes` | `5` | First-run look-back window; keep aligned with the timer cadence. |
 | `AutoSchedule__DryRun` | `false` | When `true`, logs what would start/stop without acting. |
-| `AutoSchedule__SubscriptionIds__0`, `__1`, … | *(empty)* | Optional subscription ids to scan. Empty = the identity's default subscription. |
+| `AutoSchedule__SubscriptionIds__0`, `__1`, … | *(empty)* | Optional subscription ids to scan. Empty = all subscriptions accessible to the identity. |
 
 ## Project layout
 
@@ -182,9 +182,11 @@ az role assignment create \
   --scope "/providers/Microsoft.Management/managementGroups/$MG_ID"
 ```
 
-> To scan more than the RG's own subscription, list them in
-> `AutoSchedule:SubscriptionIds` (Bicep `subscriptionIds` parameter); the identity's
-> management-group assignment must cover those subscriptions.
+> By default the function scans **every subscription the identity can access**
+> (all subscriptions under the management-group assignment). To restrict the
+> scan to specific subscriptions, list them in `AutoSchedule:SubscriptionIds`
+> (Bicep `subscriptionIds` parameter); the identity's management-group
+> assignment must still cover those subscriptions.
 
 #### Option B — Azure portal
 
