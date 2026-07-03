@@ -35,5 +35,14 @@
       matchPackageNames: ["Microsoft.ApplicationInsights.WorkerService"],
       allowedVersions: "<3.0.0",
     },
+    {
+      // The app targets net8.0 (LTS). The dotnet-version datasource used to pin
+      // the CI SDK (# renovate comments on setup-dotnet) otherwise offers major
+      // bumps (e.g. 10.x, see closed PR #29). Keep the SDK on the .NET 8 line so
+      // Renovate only proposes 8.0.x patch/feature updates.
+      matchDatasources: ["dotnet-version"],
+      matchPackageNames: ["dotnet-sdk"],
+      allowedVersions: "<9.0.0",
+    },
   ],
 }

@@ -1,7 +1,8 @@
 # Tool versions for this repository, pinned and Renovate-managed (mise manager).
-# These are the lint tools run by the shared lint workflow
-# (.github/workflows/lint.yml, DevSecNinja/.github). The workflow installs from
+# Most entries are the lint tools run by the shared lint workflow
+# (.github/workflows/lint.yml, DevSecNinja/.github); the workflow installs from
 # this config and fails with guidance if a tool it needs is not pinned here.
+# lefthook + cocogitto drive the local git hooks defined in .lefthook.toml.
 [tools]
 dprint = "0.55.1"
 yamlfmt = "0.21.0"
@@ -11,5 +12,7 @@ shellcheck = "0.11.0"
 shfmt = "3.13.1"
 trivy = "0.72.0"
 zizmor = "1.26.1"
+lefthook = "2.1.9"
+cocogitto = "7.0.0"
 "pipx:yamllint" = "1.38.0"
 "pipx:checkov" = "3.3.6"

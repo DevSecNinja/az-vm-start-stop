@@ -1,0 +1,9 @@
+# see https://docs.cocogitto.io/
+#
+# cocogitto is used here **only for commit-message validation** (via `cog verify`
+# in the lefthook commit-msg hook). Version bumping and CHANGELOG generation are
+# owned by release-please — see .github/workflows/.
+tag_prefix = "v"
+from_latest_tag = true
+ignore_merge_commits = true
+disable_changelog = true

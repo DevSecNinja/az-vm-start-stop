@@ -1,0 +1,49 @@
+# Git hooks for local development, mirroring the checks run by the shared lint
+# workflow (.github/workflows/lint.yml). Tools are pinned in .mise.toml and run
+# via `mise exec`. Install the hooks with `mise exec -- lefthook install`
+# (the devcontainer does this automatically in post-create).
+[pre-commit]
+parallel = true
+
+[pre-commit.commands.actionlint]
+run = "mise exec -- actionlint {staged_files}"
+glob = [".github/workflows/*.yml", ".github/workflows/*.yaml"]
+
+[pre-commit.commands.checkov]
+run = "mise exec -- checkov --skip-download -d ."
+
+[pre-commit.commands.format-yaml]
+run = "mise exec -- yamlfmt {staged_files}"
+glob = ["**/*.yaml", "**/*.yml"]
+stage_fixed = true
+
+[pre-commit.commands.gitleaks]
+run = "mise exec -- gitleaks protect --staged --redact"
+
+[pre-commit.commands.shellcheck]
+run = "mise exec -- shellcheck {staged_files}"
+glob = ["**/*.sh"]
+
+[pre-commit.commands.shfmt]
+run = "mise exec -- shfmt --write {staged_files}"
+glob = ["**/*.sh"]
+stage_fixed = true
+
+[pre-commit.commands.trivy]
+run = "mise exec -- trivy fs --scanners misconfig,secret ."
+
+[pre-commit.commands.yamllint]
+run = "mise exec -- yamllint {staged_files}"
+glob = ["**/*.yaml", "**/*.yml"]
+
+[pre-commit.commands.zizmor]
+run = "mise exec -- zizmor {staged_files}"
+glob = [".github/workflows/*.yml", ".github/workflows/*.yaml"]
+
+[pre-commit.commands.dprint]
+run = "mise exec -- dprint fmt {staged_files}"
+glob = ["**/*.md"]
+stage_fixed = true
+
+[commit-msg.commands.cocogitto]
+run = "mise exec -- cog verify \"$(cat {1})\""

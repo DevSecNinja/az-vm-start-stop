@@ -104,4 +104,3 @@ cost/complexity is not justified here.
 
 **Revisit if.** The workload moves to a production/regulated tenant, or storage
 must be reachable only privately. Tracking: closed issue #28.
-

@@ -33,3 +33,7 @@ install_functions_core_tools() {
 install_functions_core_tools
 az bicep install
 dotnet restore
+
+# Install git hooks (lefthook) — pinned in .mise.toml, config in .lefthook.toml.
+mise install
+mise exec -- lefthook install
