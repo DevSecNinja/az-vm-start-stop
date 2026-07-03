@@ -38,14 +38,15 @@ public sealed class VmScheduleService : IVmScheduleService
         using var runScope = _logger.BeginScope(new Dictionary<string, object>
         {
             ["RunId"] = runId,
+            ["BuildSha"] = BuildInfo.CommitSha,
             ["WindowStartUtc"] = windowStartUtc,
             ["WindowEndUtc"] = windowEndUtc,
             ["DryRun"] = _options.DryRun,
         });
 
         _logger.LogInformation(
-            "Starting schedule pass (RunId={RunId}) over window ({WindowStartUtc:o}, {WindowEndUtc:o}]; DryRun={DryRun}.",
-            runId, windowStartUtc, windowEndUtc, _options.DryRun);
+            "Starting schedule pass (RunId={RunId}, BuildSha={BuildSha}) over window ({WindowStartUtc:o}, {WindowEndUtc:o}]; DryRun={DryRun}.",
+            runId, BuildInfo.CommitSha, windowStartUtc, windowEndUtc, _options.DryRun);
 
         await foreach (var subscription in _inventory.GetSubscriptionsAsync(cancellationToken))
         {
@@ -200,8 +201,8 @@ public sealed class VmScheduleService : IVmScheduleService
         }
 
         _logger.LogInformation(
-            "Schedule pass complete (RunId={RunId}). Scanned={Scanned} Started={Started} Stopped={Stopped} Skipped={Skipped} Failed={Failed}.",
-            runId, scanned, started, stopped, skipped, failed);
+            "Schedule pass complete (RunId={RunId}, BuildSha={BuildSha}). Scanned={Scanned} Started={Started} Stopped={Stopped} Skipped={Skipped} Failed={Failed}.",
+            runId, BuildInfo.CommitSha, scanned, started, stopped, skipped, failed);
 
         return new ScheduleRunSummary(scanned, started, stopped, skipped, failed);
     }
