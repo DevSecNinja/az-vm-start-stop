@@ -1,0 +1,47 @@
+---
+name: Release Artifact
+
+# When release-please publishes a GitHub Release, build the function deployment
+# package (dotnet publish zip) for that tag and attach it as a release asset,
+# giving versioned, downloadable artifacts for manual deploy/rollback.
+
+on:
+  release:
+    types:
+      - published
+
+permissions:
+  contents: write
+
+env:
+  DOTNET_VERSION: "8.0.x"
+  FUNCTIONS_PROJECT: src/AzVmStartStop.Functions
+
+jobs:
+  attach-package:
+    name: Attach function package
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          ref: ${{ github.event.release.tag_name }}
+          persist-credentials: false
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5.4.0
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Publish and package
+        env:
+          TAG: ${{ github.event.release.tag_name }}
+          REVISION: ${{ github.sha }}
+        run: |
+          dotnet publish "${FUNCTIONS_PROJECT}" -c Release -o ./publish -p:SourceRevisionId="${REVISION}"
+          (cd publish && zip -r "../azvmstartstop-${TAG}.zip" .)
+
+      - name: Upload package to release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.event.release.tag_name }}
+        run: gh release upload "${TAG}" "azvmstartstop-${TAG}.zip" --clobber
