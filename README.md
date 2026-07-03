@@ -57,18 +57,26 @@ hierarchy at runtime:
 | `AutoSchedule__DefaultTimeZone` | `Europe/Amsterdam` | TZ used when a VM has no per-action time zone tag. |
 | `AutoSchedule__ScheduleWindowMinutes` | `5` | First-run look-back window; keep aligned with the timer cadence. |
 | `AutoSchedule__DryRun` | `false` | When `true`, logs what would start/stop without acting. |
+| `AutoSchedule__OperationTimeoutSeconds` | `45` | Max seconds a pass waits for a start/deallocate to complete before logging a warning and moving on. |
 | `AutoSchedule__SubscriptionIds__0`, `__1`, … | *(empty)* | Optional subscription ids to scan. Empty = all subscriptions accessible to the identity. |
 
 ## Project layout
 
 ```
 src/AzVmStartStop.Functions/         # Function app (timer trigger, services)
-src/AzVmStartStop.Functions.Tests/   # xUnit tests (cron/time zone + power-state logic)
+src/AzVmStartStop.Functions.Tests/   # xUnit tests (cron/time zone + power-state + schedule orchestration)
 infra/main.bicep                     # RG-scoped: identity, storage, plan, App Insights, function
 infra/abbreviations.json             # Azure CAF resource-type abbreviations (azd standard)
 infra/main.sample.bicepparam         # Example parameters (placeholders only)
 .github/workflows/deploy.yml         # Build/test + OIDC deploy
+docs/                                # Architecture, design decisions, troubleshooting
 ```
+
+## Documentation
+
+- [`docs/architecture.md`](docs/architecture.md) — components, request flow, infra, security.
+- [`docs/decisions.md`](docs/decisions.md) — key design decisions and their rationale.
+- [`docs/troubleshooting.md`](docs/troubleshooting.md) — Application Insights queries, log reference, common problems.
 
 ## Build & test locally
 

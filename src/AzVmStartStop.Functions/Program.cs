@@ -42,6 +42,7 @@ var host = new HostBuilder()
         services.AddSingleton(sp => new ArmClient(sp.GetRequiredService<TokenCredential>()));
 
         services.AddSingleton<ICronScheduleEvaluator, CronScheduleEvaluator>();
+        services.AddSingleton<IVmInventory, ArmVmInventory>();
         services.AddSingleton<IVmScheduleService, VmScheduleService>();
     })
     .Build();

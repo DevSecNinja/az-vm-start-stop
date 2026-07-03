@@ -1,6 +1,3 @@
-using Azure.ResourceManager;
-using Azure.ResourceManager.Compute;
-using Azure.ResourceManager.Resources;
 using AzVmStartStop.Functions.Options;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -10,20 +7,22 @@ namespace AzVmStartStop.Functions.Services;
 /// <inheritdoc />
 public sealed class VmScheduleService : IVmScheduleService
 {
-    private readonly ArmClient _armClient;
+    private readonly IVmInventory _inventory;
     private readonly ICronScheduleEvaluator _evaluator;
     private readonly AutoScheduleOptions _options;
+    private readonly TimeSpan _operationTimeout;
     private readonly ILogger<VmScheduleService> _logger;
 
     public VmScheduleService(
-        ArmClient armClient,
+        IVmInventory inventory,
         ICronScheduleEvaluator evaluator,
         IOptions<AutoScheduleOptions> options,
         ILogger<VmScheduleService> logger)
     {
-        _armClient = armClient;
+        _inventory = inventory;
         _evaluator = evaluator;
         _options = options.Value;
+        _operationTimeout = TimeSpan.FromSeconds(_options.OperationTimeoutSeconds);
         _logger = logger;
     }
 
@@ -48,27 +47,27 @@ public sealed class VmScheduleService : IVmScheduleService
             "Starting schedule pass (RunId={RunId}) over window ({WindowStartUtc:o}, {WindowEndUtc:o}]; DryRun={DryRun}.",
             runId, windowStartUtc, windowEndUtc, _options.DryRun);
 
-        await foreach (var subscription in GetSubscriptionsAsync(cancellationToken))
+        await foreach (var subscription in _inventory.GetSubscriptionsAsync(cancellationToken))
         {
-            var subscriptionId = subscription.Id?.SubscriptionId ?? subscription.Id?.ToString() ?? "(unknown)";
+            var subscriptionId = subscription.SubscriptionId;
             _logger.LogInformation("Scanning subscription '{SubscriptionId}' for virtual machines.", subscriptionId);
 
             try
             {
-                await foreach (var vm in subscription.GetVirtualMachinesAsync(cancellationToken: cancellationToken))
+                await foreach (var vm in subscription.GetVirtualMachinesAsync(cancellationToken))
                 {
                     scanned++;
-                    var name = vm.Id.Name;
+                    var name = vm.Name;
 
                     using var vmScope = _logger.BeginScope(new Dictionary<string, object>
                     {
                         ["VmName"] = name,
-                        ["ResourceGroup"] = vm.Id.ResourceGroupName ?? string.Empty,
-                        ["SubscriptionId"] = vm.Id.SubscriptionId ?? string.Empty,
-                        ["VmId"] = vm.Id.ToString(),
+                        ["ResourceGroup"] = vm.ResourceGroup ?? string.Empty,
+                        ["SubscriptionId"] = vm.SubscriptionId ?? string.Empty,
+                        ["VmId"] = vm.Id,
                     });
 
-                    var tags = vm.Data.Tags;
+                    var tags = vm.Tags;
                     var tagKeys = tags is { Count: > 0 } ? string.Join(", ", tags.Keys) : "(none)";
 
                     if (tags is null || tags.Count == 0)
@@ -120,7 +119,7 @@ public sealed class VmScheduleService : IVmScheduleService
 
                     try
                     {
-                        var powerState = await GetPowerStateAsync(vm, cancellationToken);
+                        var powerState = await vm.GetPowerStateAsync(cancellationToken);
                         _logger.LogInformation(
                             "VM '{VmName}' is due to {Action}; current power state is '{PowerState}'.",
                             name, action, powerState ?? "unknown");
@@ -142,7 +141,11 @@ public sealed class VmScheduleService : IVmScheduleService
                             }
 
                             _logger.LogInformation("Starting VM '{VmName}'.", name);
-                            await vm.PowerOnAsync(Azure.WaitUntil.Started, cancellationToken);
+                            if (await ExecuteWithTimeoutAsync(name, "start", vm.StartAsync, cancellationToken))
+                            {
+                                _logger.LogInformation("VM '{VmName}' has started.", name);
+                            }
+
                             started++;
                         }
                         else // stopDue
@@ -162,7 +165,11 @@ public sealed class VmScheduleService : IVmScheduleService
                             }
 
                             _logger.LogInformation("Deallocating VM '{VmName}'.", name);
-                            await vm.DeallocateAsync(Azure.WaitUntil.Started, cancellationToken: cancellationToken);
+                            if (await ExecuteWithTimeoutAsync(name, "deallocate", vm.DeallocateAsync, cancellationToken))
+                            {
+                                _logger.LogInformation("VM '{VmName}' has stopped (deallocated).", name);
+                            }
+
                             stopped++;
                         }
                     }
@@ -199,8 +206,39 @@ public sealed class VmScheduleService : IVmScheduleService
         return new ScheduleRunSummary(scanned, started, stopped, skipped, failed);
     }
 
+    /// <summary>
+    /// Runs a start/deallocate operation, waiting up to <see cref="_operationTimeout"/>
+    /// for it to complete. Returns <c>true</c> when the operation confirmed
+    /// completion, or <c>false</c> when the wait timed out (the operation still
+    /// continues in Azure). Real failures and host cancellation propagate.
+    /// </summary>
+    private async Task<bool> ExecuteWithTimeoutAsync(
+        string vmName,
+        string action,
+        Func<CancellationToken, Task> operation,
+        CancellationToken cancellationToken)
+    {
+        using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        timeoutCts.CancelAfter(_operationTimeout);
+
+        try
+        {
+            await operation(timeoutCts.Token);
+            return true;
+        }
+        catch (OperationCanceledException)
+            when (!cancellationToken.IsCancellationRequested && timeoutCts.IsCancellationRequested)
+        {
+            _logger.LogWarning(
+                "VM '{VmName}' {Action} was requested but did not confirm completion within {TimeoutSeconds}s; " +
+                "it may still be transitioning in Azure.",
+                vmName, action, _operationTimeout.TotalSeconds);
+            return false;
+        }
+    }
+
     private bool IsDue(
-        IDictionary<string, string> tags,
+        IReadOnlyDictionary<string, string> tags,
         string cronTag,
         string timeZoneTag,
         DateTimeOffset windowStartUtc,
@@ -213,39 +251,5 @@ public sealed class VmScheduleService : IVmScheduleService
 
         tags.TryGetValue(timeZoneTag, out var timeZoneId);
         return _evaluator.IsDue(cron, timeZoneId, windowStartUtc, windowEndUtc);
-    }
-
-    private async IAsyncEnumerable<SubscriptionResource> GetSubscriptionsAsync(
-        [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
-    {
-        if (_options.SubscriptionIds.Length == 0)
-        {
-            _logger.LogInformation(
-                "No SubscriptionIds configured; scanning all subscriptions accessible to the managed identity.");
-
-            await foreach (var subscription in _armClient.GetSubscriptions().GetAllAsync(cancellationToken))
-            {
-                yield return subscription;
-            }
-
-            yield break;
-        }
-
-        _logger.LogInformation(
-            "Using {Count} configured subscription(s): {SubscriptionIds}.",
-            _options.SubscriptionIds.Length,
-            string.Join(", ", _options.SubscriptionIds));
-
-        foreach (var subscriptionId in _options.SubscriptionIds)
-        {
-            var id = SubscriptionResource.CreateResourceIdentifier(subscriptionId.Trim());
-            yield return _armClient.GetSubscriptionResource(id);
-        }
-    }
-
-    private static async Task<string?> GetPowerStateAsync(VirtualMachineResource vm, CancellationToken cancellationToken)
-    {
-        var instanceView = await vm.InstanceViewAsync(cancellationToken);
-        return VmPowerState.FromStatusCodes(instanceView.Value.Statuses.Select(s => s.Code));
     }
 }

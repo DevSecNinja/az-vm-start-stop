@@ -25,6 +25,14 @@ public sealed class AutoScheduleOptions
     public int ScheduleWindowMinutes { get; set; } = 5;
 
     /// <summary>
+    /// Maximum time, in seconds, to wait for a start/deallocate operation to
+    /// complete before logging a warning and moving on. The operation continues
+    /// in Azure; this only bounds how long a single pass waits on it.
+    /// </summary>
+    [Range(1, 3600)]
+    public int OperationTimeoutSeconds { get; set; } = 45;
+
+    /// <summary>
     /// Optional list of subscription ids to scan. When empty, every
     /// subscription accessible to the function's managed identity is scanned
     /// (e.g. all subscriptions under a management group on which the identity
