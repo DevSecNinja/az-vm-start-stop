@@ -10,13 +10,17 @@ using Microsoft.Extensions.Logging;
 
 var host = new HostBuilder()
     .ConfigureFunctionsWorkerDefaults()
-    .ConfigureLogging(logging =>
+    .ConfigureServices((context, services) =>
     {
-        // The .NET isolated worker's Application Insights integration installs a
-        // default filter rule that drops all logs below Warning for the App
-        // Insights provider. Remove it so our Information-level diagnostics
-        // (e.g. "Schedule pass complete. Scanned=...") actually reach App Insights.
-        logging.Services.Configure<LoggerFilterOptions>(options =>
+        services.AddApplicationInsightsTelemetryWorkerService();
+        services.ConfigureFunctionsApplicationInsights();
+
+        // ConfigureFunctionsApplicationInsights() installs a filter rule that
+        // drops all logs below Warning for the App Insights provider. This
+        // removal MUST be registered after it so it runs last and actually
+        // wins; otherwise our Information-level diagnostics (e.g. "Schedule
+        // pass complete. Scanned=...") never reach App Insights.
+        services.Configure<LoggerFilterOptions>(options =>
         {
             var defaultRule = options.Rules.FirstOrDefault(rule =>
                 rule.ProviderName ==
@@ -26,11 +30,6 @@ var host = new HostBuilder()
                 options.Rules.Remove(defaultRule);
             }
         });
-    })
-    .ConfigureServices((context, services) =>
-    {
-        services.AddApplicationInsightsTelemetryWorkerService();
-        services.ConfigureFunctionsApplicationInsights();
 
         services.AddOptions<AutoScheduleOptions>()
             .Bind(context.Configuration.GetSection(AutoScheduleOptions.SectionName))
