@@ -7,15 +7,15 @@ tags, evaluated in a per-VM (or default) time zone.
 
 ## Components
 
-| Component | File | Responsibility |
-| --- | --- | --- |
-| `ScheduleFunction` | `ScheduleFunction.cs` | Timer trigger (`%ScheduleExpression%`). Resolves the evaluation window from the timer's previous run and delegates to the schedule service. |
-| `IVmScheduleService` / `VmScheduleService` | `Services/VmScheduleService.cs` | Orchestrates a pass: enumerates subscriptions/VMs, evaluates tags, decides start/stop/skip, performs the action, and produces a `ScheduleRunSummary`. Owns all logging, counting and error handling. |
-| `IVmInventory` / `ArmVmInventory` | `Services/IVmInventory.cs`, `Services/ArmVmInventory.cs` | Abstraction over the Azure Resource Manager SDK. Yields subscriptions and their VMs; the ARM implementation wraps `ArmClient`, `SubscriptionResource` and `VirtualMachineResource`. Keeps `VmScheduleService` unit-testable. |
-| `ICronScheduleEvaluator` / `CronScheduleEvaluator` | `Services/CronScheduleEvaluator.cs` | Decides whether a 5-field cron expression has an occurrence in the UTC window, evaluated in a resolved time zone. Uses `NCrontab`. |
-| `VmPowerState` | `Services/VmPowerState.cs` | Interprets instance-view power-state codes and decides whether a start/stop is applicable. |
-| `AutoScheduleOptions` | `Options/AutoScheduleOptions.cs` | Bound configuration (default time zone, window, subscriptions, dry-run, operation timeout). |
-| `TagNames` | `TagNames.cs` | Tag names that drive behaviour (`AutoStart`, `AutoStop`, `AutoStartTimeZone`, `AutoStopTimeZone`). |
+| Component                                          | File                                                     | Responsibility                                                                                                                                                                                                               |
+| -------------------------------------------------- | -------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ScheduleFunction`                                 | `ScheduleFunction.cs`                                    | Timer trigger (`%ScheduleExpression%`). Resolves the evaluation window from the timer's previous run and delegates to the schedule service.                                                                                  |
+| `IVmScheduleService` / `VmScheduleService`         | `Services/VmScheduleService.cs`                          | Orchestrates a pass: enumerates subscriptions/VMs, evaluates tags, decides start/stop/skip, performs the action, and produces a `ScheduleRunSummary`. Owns all logging, counting and error handling.                         |
+| `IVmInventory` / `ArmVmInventory`                  | `Services/IVmInventory.cs`, `Services/ArmVmInventory.cs` | Abstraction over the Azure Resource Manager SDK. Yields subscriptions and their VMs; the ARM implementation wraps `ArmClient`, `SubscriptionResource` and `VirtualMachineResource`. Keeps `VmScheduleService` unit-testable. |
+| `ICronScheduleEvaluator` / `CronScheduleEvaluator` | `Services/CronScheduleEvaluator.cs`                      | Decides whether a 5-field cron expression has an occurrence in the UTC window, evaluated in a resolved time zone. Uses `NCrontab`.                                                                                           |
+| `VmPowerState`                                     | `Services/VmPowerState.cs`                               | Interprets instance-view power-state codes and decides whether a start/stop is applicable.                                                                                                                                   |
+| `AutoScheduleOptions`                              | `Options/AutoScheduleOptions.cs`                         | Bound configuration (default time zone, window, subscriptions, dry-run, operation timeout).                                                                                                                                  |
+| `TagNames`                                         | `TagNames.cs`                                            | Tag names that drive behaviour (`AutoStart`, `AutoStop`, `AutoStartTimeZone`, `AutoStopTimeZone`).                                                                                                                           |
 
 ## Request flow
 
@@ -60,7 +60,7 @@ tags, evaluated in a per-VM (or default) time zone.
 
 ## Deployment
 
-`.github/workflows/deploy.yml`: build + test, then (on `main`) OIDC login,
+`.github/workflows/ci-cd.yml`: build + test, then (on `main`) OIDC login,
 Bicep deploy and function package deploy. Azure steps are run via the **Azure
 CLI** rather than `azure/*` actions (see `docs/decisions.md`). Full setup is in
 [`docs/deployment.md`](deployment.md).

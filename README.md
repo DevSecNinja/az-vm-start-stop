@@ -2,7 +2,7 @@
 
 Tag-driven **auto-start and auto-stop** for Azure Virtual Machines.
 
-Azure VMs ship with a native *auto-shutdown* feature but no built-in *auto-start*,
+Azure VMs ship with a native _auto-shutdown_ feature but no built-in _auto-start_,
 and the native shutdown is a single fixed daily time. This project provides both,
 driven by cron tags: a small, self-owned Azure Function (C# / .NET 8 isolated worker)
 runs on a timer, finds VMs tagged with a start and/or stop schedule, and starts or
@@ -25,12 +25,12 @@ just a single timer-triggered function using a managed identity.
 
 ## Tag schema
 
-| Tag | Required | Description | Example |
-| --- | --- | --- | --- |
-| `AutoStart` | No\* | 5-field cron (`minute hour day-of-month month day-of-week`), evaluated in the VM's time zone. Presence enables auto-start. | `0 7 * * 1-5` |
-| `AutoStop` | No\* | 5-field cron. Presence enables auto-stop (deallocate). | `0 19 * * 1-5` |
-| `AutoStartTimeZone` | No | IANA or Windows time zone id for `AutoStart`. Defaults to **`Europe/Amsterdam`** (configurable). | `Europe/Amsterdam` / `W. Europe Standard Time` |
-| `AutoStopTimeZone` | No | Time zone id for `AutoStop`. Defaults to **`Europe/Amsterdam`**. | `UTC` |
+| Tag                 | Required | Description                                                                                                                | Example                                        |
+| ------------------- | -------- | -------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------- |
+| `AutoStart`         | No\*     | 5-field cron (`minute hour day-of-month month day-of-week`), evaluated in the VM's time zone. Presence enables auto-start. | `0 7 * * 1-5`                                  |
+| `AutoStop`          | No\*     | 5-field cron. Presence enables auto-stop (deallocate).                                                                     | `0 19 * * 1-5`                                 |
+| `AutoStartTimeZone` | No       | IANA or Windows time zone id for `AutoStart`. Defaults to **`Europe/Amsterdam`** (configurable).                           | `Europe/Amsterdam` / `W. Europe Standard Time` |
+| `AutoStopTimeZone`  | No       | Time zone id for `AutoStop`. Defaults to **`Europe/Amsterdam`**.                                                           | `UTC`                                          |
 
 \* At least one of `AutoStart` / `AutoStop` must be present for a VM to participate.
 
@@ -51,14 +51,14 @@ Set via app settings (Bicep parameters below wire these up automatically). Azure
 app-setting names use `__` (double underscore), which .NET maps to the `:` config
 hierarchy at runtime:
 
-| Setting | Default | Description |
-| --- | --- | --- |
-| `ScheduleExpression` | `0 */5 * * * *` | Timer cadence (6-field NCRONTAB). |
-| `AutoSchedule__DefaultTimeZone` | `Europe/Amsterdam` | TZ used when a VM has no per-action time zone tag. |
-| `AutoSchedule__ScheduleWindowMinutes` | `5` | First-run look-back window; keep aligned with the timer cadence. |
-| `AutoSchedule__DryRun` | `false` | When `true`, logs what would start/stop without acting. |
-| `AutoSchedule__OperationTimeoutSeconds` | `45` | Max seconds a pass waits for a start/deallocate to complete before logging a warning and moving on. |
-| `AutoSchedule__SubscriptionIds__0`, `__1`, … | *(empty)* | Optional subscription ids to scan. Empty = all subscriptions accessible to the identity. |
+| Setting                                      | Default            | Description                                                                                         |
+| -------------------------------------------- | ------------------ | --------------------------------------------------------------------------------------------------- |
+| `ScheduleExpression`                         | `0 */5 * * * *`    | Timer cadence (6-field NCRONTAB).                                                                   |
+| `AutoSchedule__DefaultTimeZone`              | `Europe/Amsterdam` | TZ used when a VM has no per-action time zone tag.                                                  |
+| `AutoSchedule__ScheduleWindowMinutes`        | `5`                | First-run look-back window; keep aligned with the timer cadence.                                    |
+| `AutoSchedule__DryRun`                       | `false`            | When `true`, logs what would start/stop without acting.                                             |
+| `AutoSchedule__OperationTimeoutSeconds`      | `45`               | Max seconds a pass waits for a start/deallocate to complete before logging a warning and moving on. |
+| `AutoSchedule__SubscriptionIds__0`, `__1`, … | _(empty)_          | Optional subscription ids to scan. Empty = all subscriptions accessible to the identity.            |
 
 ## Project layout
 
@@ -68,7 +68,7 @@ src/AzVmStartStop.Functions.Tests/   # xUnit tests (cron/time zone + power-state
 infra/main.bicep                     # RG-scoped: identity, storage, plan, App Insights, function
 infra/abbreviations.json             # Azure CAF resource-type abbreviations (azd standard)
 infra/main.sample.bicepparam         # Example parameters (placeholders only)
-.github/workflows/deploy.yml         # Build/test + OIDC deploy
+.github/workflows/ci-cd.yml          # Build/test + OIDC deploy
 docs/                                # Architecture, design decisions, troubleshooting
 ```
 
@@ -102,13 +102,13 @@ This is a **self-hosted** service you run in your own Azure tenant — there is 
 shared/central instance. To adopt it:
 
 1. **Fork this repository** (a fork keeps a link to upstream, so you can pull in
-   fixes and improvements later). *"Use this template" also works if you prefer a
-   fully independent copy.*
+   fixes and improvements later). _"Use this template" also works if you prefer a
+   fully independent copy._
 2. **Set up the deploy identity + GitHub OIDC** and add the repository variables
    (`AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`,
    `AZURE_RESOURCE_GROUP`, `AZURE_NAME_PREFIX`). Full steps:
    [`docs/deployment.md`](docs/deployment.md).
-3. **Deploy** by pushing to `main` (or running the *Deploy* workflow manually).
+3. **Deploy** by pushing to `main` (or running the _Deploy_ workflow manually).
    The workflow builds, tests, and deploys the function into your resource group.
 4. **Grant it permission to act on VMs**: assign the function's managed identity
    `Virtual Machine Contributor` at the management-group or subscription scope

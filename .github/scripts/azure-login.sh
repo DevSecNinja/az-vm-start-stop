@@ -8,8 +8,8 @@ set -euo pipefail
 
 id_token=$(curl -sS --fail \
     -H "Authorization: bearer ${ACTIONS_ID_TOKEN_REQUEST_TOKEN}" \
-    "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=api://AzureADTokenExchange" \
-    | jq -r '.value')
+    "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=api://AzureADTokenExchange" |
+    jq -r '.value')
 if [ -z "${id_token}" ] || [ "${id_token}" = "null" ]; then
     echo "::error::Failed to obtain a GitHub OIDC token for Azure login."
     exit 1
@@ -27,4 +27,5 @@ if [ "${sub_count:-0}" -lt 1 ]; then
     echo "::error::Azure login succeeded but the identity has access to no enabled subscriptions."
     exit 1
 fi
-echo "Azure login OK — ${sub_count} accessible subscription(s); active: $(az account show --query name --output tsv)."
+active_sub=$(az account show --query name --output tsv)
+echo "Azure login OK — ${sub_count} accessible subscription(s); active: ${active_sub}."

@@ -12,12 +12,14 @@ permissions:
 
 jobs:
   lint:
-    uses: DevSecNinja/.github/.github/workflows/lint.yml@27fd66740c629ea38380dcd3bf93e7bc74c54247 # v1.9.0
+    uses: DevSecNinja/.github/.github/workflows/lint.yml@20bbfb951fc715ea1a30c6ed75032aa0acc0337e # v2.1.0
     permissions:
       contents: read
       security-events: write
     with:
       # renovate: datasource=github-releases depName=jdx/mise
       mise-version: "2026.6.11"
+      # Standard lint config files are synced to the repo root by config-sync.
+      lint-config-dir: "."
       # Optional: fail this workflow when a linter fails (default: false).
       # lint-fail-on-error: true

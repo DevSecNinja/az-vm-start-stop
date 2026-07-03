@@ -1,3 +1,4 @@
+---
 name: Nightly Stability Check
 
 # Verifies the function is actually running: queries Application Insights for

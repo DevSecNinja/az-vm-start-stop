@@ -7,7 +7,7 @@ the alternatives considered.
 
 **Decision.** When `AutoSchedule:SubscriptionIds` is empty, enumerate every
 subscription the managed identity can access (`ArmClient.GetSubscriptions()`),
-not just the identity's *default* subscription.
+not just the identity's _default_ subscription.
 
 **Why.** The function's `Virtual Machine Contributor` role is typically assigned
 at **management-group** scope, so target VMs live in many subscriptions. The
