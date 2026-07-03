@@ -106,6 +106,63 @@ resource appInsights 'Microsoft.Insights/components@2020-02-02' = {
   }
 }
 
+// Notifies subscription Owners (the admins) by email — via ARM role, so no
+// email address is hardcoded.
+resource alertActionGroup 'Microsoft.Insights/actionGroups@2023-01-01' = {
+  name: '${abbrs.insightsActionGroups}${namePrefix}-${resourceToken}'
+  location: 'global'
+  properties: {
+    groupShortName: take(sanitizedPrefix, 12)
+    enabled: true
+    armRoleReceivers: [
+      {
+        name: 'Subscription Owners'
+        roleId: '8e3af657-a8ff-443c-a75c-2fe8c4bcb635' // Owner
+        useCommonAlertSchema: true
+      }
+    ]
+  }
+}
+
+// Near-real-time liveness alert: fire when the function has logged no
+// "Schedule pass complete" trace in the last hour, i.e. it has stopped running.
+resource noSchedulePassAlert 'Microsoft.Insights/scheduledQueryRules@2023-03-15-preview' = {
+  name: 'sqr-${namePrefix}-no-schedule-pass'
+  location: location
+  properties: {
+    displayName: '${namePrefix}: function not running (no schedule passes)'
+    description: 'No "Schedule pass complete" trace in the last hour — the function may have stopped running.'
+    severity: 1
+    enabled: true
+    scopes: [
+      appInsights.id
+    ]
+    evaluationFrequency: 'PT15M'
+    windowSize: 'PT1H'
+    criteria: {
+      allOf: [
+        {
+          query: 'traces | where message has "Schedule pass complete" | summarize count_ = count()'
+          timeAggregation: 'Total'
+          metricMeasureColumn: 'count_'
+          operator: 'LessThan'
+          threshold: 1
+          failingPeriods: {
+            numberOfEvaluationPeriods: 1
+            minFailingPeriodsToAlert: 1
+          }
+        }
+      ]
+    }
+    autoMitigate: true
+    actions: {
+      actionGroups: [
+        alertActionGroup.id
+      ]
+    }
+  }
+}
+
 resource plan 'Microsoft.Web/serverfarms@2024-04-01' = {
   name: planName
   location: location
