@@ -1,0 +1,62 @@
+---
+name: Cost Estimator
+
+on:
+  pull_request:
+    paths:
+      - 'infra/**'
+      - '.github/workflows/cost-estimator.yml'
+      - '.github/scripts/azure-login.sh'
+      - '.github/scripts/verify-resource-group.sh'
+      - '.github/scripts/install-ace.sh'
+      - '.github/scripts/estimate-infra-cost.sh'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  estimate:
+    name: Estimate infra cost
+    if: >-
+      (github.event_name != 'pull_request' ||
+      github.event.pull_request.head.repo.full_name == github.repository) &&
+      vars.AZURE_CLIENT_ID != '' &&
+      vars.AZURE_TENANT_ID != '' &&
+      vars.AZURE_SUBSCRIPTION_ID != '' &&
+      vars.AZURE_RESOURCE_GROUP != '' &&
+      vars.AZURE_NAME_PREFIX != ''
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Azure login
+        env:
+          AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
+          AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+          AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+        run: bash .github/scripts/azure-login.sh
+
+      - name: Verify resource group exists
+        env:
+          AZURE_RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP }}
+        run: bash .github/scripts/verify-resource-group.sh
+
+      - name: Install Azure Cost Estimator
+        run: bash .github/scripts/install-ace.sh
+
+      - name: Estimate infrastructure cost
+        env:
+          AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+          AZURE_RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP }}
+          AZURE_NAME_PREFIX: ${{ vars.AZURE_NAME_PREFIX }}
+        run: bash .github/scripts/estimate-infra-cost.sh
