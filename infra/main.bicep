@@ -57,6 +57,11 @@ resource identity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' 
 }
 
 resource storage 'Microsoft.Storage/storageAccounts@2023-05-01' = {
+  // Holds only the function's runtime state + deployment package; hardened below
+  // with TLS1_2, HTTPS-only, identity-based access (no shared key), no public blob.
+  //checkov:skip=CKV_AZURE_35:Default-deny network rules would block the function's identity-based access to its own storage; no VNet in this lean deployment.
+  //checkov:skip=CKV_AZURE_206:Standard_LRS is sufficient for transient function state; geo/zone replication is unnecessary cost here.
+  //checkov:skip=CKV_AZURE_43:Name is generated to valid rules (lowercase alphanumeric, <=24 chars); false positive.
   name: storageAccountName
   location: location
   sku: {
@@ -164,6 +169,7 @@ resource noSchedulePassAlert 'Microsoft.Insights/scheduledQueryRules@2023-03-15-
 }
 
 resource plan 'Microsoft.Web/serverfarms@2024-04-01' = {
+  //checkov:skip=CKV_AZURE_225:Single-purpose scheduler on Flex Consumption; zone redundancy is unnecessary cost for this workload.
   name: planName
   location: location
   kind: 'functionapp'
@@ -221,6 +227,16 @@ var subscriptionIdSettings = [for (id, i) in subscriptionIds: {
 }]
 
 resource functionApp 'Microsoft.Web/sites@2024-04-01' = {
+  // Timer-triggered function on Flex Consumption: no inbound HTTP surface, and
+  // TLS/FTP/HTTP-version/public-access are platform-managed on Flex. httpsOnly is set.
+  //checkov:skip=CKV_AZURE_67:No HTTP trigger; HTTP/2 is irrelevant and platform-managed on Flex Consumption.
+  //checkov:skip=CKV_AZURE_18:No HTTP trigger; HTTP version is platform-managed on Flex Consumption.
+  //checkov:skip=CKV_AZURE_15:TLS is platform-managed on Flex Consumption (HTTPS enforced); no siteConfig.minTlsVersion knob.
+  //checkov:skip=CKV_AZURE_17:No inbound HTTP clients (timer-only); client certificates are not applicable.
+  //checkov:skip=CKV_AZURE_78:Flex Consumption deploys via OneDeploy (identity-based blob container), not FTP.
+  //checkov:skip=CKV_AZURE_222:Disabling public network access requires private endpoints/VNet; out of scope for this lean deployment.
+  //checkov:skip=CKV_AZURE_212:Flex Consumption autoscales; fixed min-instance failover is not applicable.
+  //checkov:skip=CKV_AZURE_213:Health-check endpoints apply to HTTP apps; this function is timer-only with no HTTP surface.
   name: functionAppName
   location: location
   kind: 'functionapp,linux'
