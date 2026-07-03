@@ -1,0 +1,7 @@
+# Paths excluded from config-sync (one per line, relative to repo root).
+# Blank lines and '#' comments are allowed.
+#
+# renovate.json5 carries repo-specific packageRules (e.g. pinning
+# Microsoft.ApplicationInsights.WorkerService < 3.0.0), so we manage it locally
+# instead of letting config-sync overwrite it with the central template.
+renovate.json5
