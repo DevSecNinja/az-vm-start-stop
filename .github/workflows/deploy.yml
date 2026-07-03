@@ -23,10 +23,10 @@ jobs:
     name: Build & Test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4.3.1
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
@@ -45,16 +45,16 @@ jobs:
     runs-on: ubuntu-latest
     environment: production
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4.3.1
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
       # OIDC federated login — no client secret is stored.
       - name: Azure login
-        uses: azure/login@v2
+        uses: azure/login@a457da9ea143d694b1b9c7c869ebb04ebe844ef5 # v2.3.0
         with:
           client-id: ${{ vars.AZURE_CLIENT_ID }}
           tenant-id: ${{ vars.AZURE_TENANT_ID }}
@@ -62,7 +62,7 @@ jobs:
 
       - name: Deploy infrastructure (Bicep)
         id: infra
-        uses: azure/arm-deploy@v2
+        uses: azure/arm-deploy@a1361c2c2cd398621955b16ca32e01c65ea340f5 # v2.0.0
         with:
           scope: resourcegroup
           resourceGroupName: ${{ vars.AZURE_RESOURCE_GROUP }}
@@ -75,7 +75,7 @@ jobs:
         run: dotnet publish ${{ env.FUNCTIONS_PROJECT }} --configuration ${{ env.BUILD_CONFIGURATION }} --output ./publish
 
       - name: Deploy function app
-        uses: azure/functions-action@v1
+        uses: azure/functions-action@bc63708cc6539760eea18d8a7de4ce8ef5fdf593 # v1.5.6
         with:
           app-name: ${{ steps.infra.outputs.functionAppName }}
           package: ./publish
