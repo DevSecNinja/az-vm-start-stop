@@ -15,7 +15,7 @@ jobs:
     # TEMP: pinned to the fix/lint-mise-tool-activation commit (DevSecNinja/.github#239)
     # so lint installs tools from this repo's .mise.toml. Revert to the released
     # tag once #239 is merged and released (Renovate will bump it).
-    uses: DevSecNinja/.github/.github/workflows/lint.yml@7b175572ed80f4d8430e58f824cd75c1f492ed6c # fix/lint-mise-tool-activation
+    uses: DevSecNinja/.github/.github/workflows/lint.yml@234aa2fe7ec0632f48d5fa2b4178d7a088accd72 # fix/lint-mise-tool-activation
     permissions:
       contents: read
       security-events: write
