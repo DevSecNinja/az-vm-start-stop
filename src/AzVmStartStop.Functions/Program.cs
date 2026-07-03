@@ -6,9 +6,27 @@ using AzVmStartStop.Functions.Services;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
 var host = new HostBuilder()
     .ConfigureFunctionsWorkerDefaults()
+    .ConfigureLogging(logging =>
+    {
+        // The .NET isolated worker's Application Insights integration installs a
+        // default filter rule that drops all logs below Warning for the App
+        // Insights provider. Remove it so our Information-level diagnostics
+        // (e.g. "Schedule pass complete. Scanned=...") actually reach App Insights.
+        logging.Services.Configure<LoggerFilterOptions>(options =>
+        {
+            var defaultRule = options.Rules.FirstOrDefault(rule =>
+                rule.ProviderName ==
+                "Microsoft.Extensions.Logging.ApplicationInsights.ApplicationInsightsLoggerProvider");
+            if (defaultRule is not null)
+            {
+                options.Rules.Remove(defaultRule);
+            }
+        });
+    })
     .ConfigureServices((context, services) =>
     {
         services.AddApplicationInsightsTelemetryWorkerService();

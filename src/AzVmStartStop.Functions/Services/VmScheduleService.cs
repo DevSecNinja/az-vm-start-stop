@@ -35,14 +35,38 @@ public sealed class VmScheduleService : IVmScheduleService
     {
         int scanned = 0, started = 0, stopped = 0, skipped = 0, failed = 0;
 
+        var runId = Guid.NewGuid().ToString("N");
+        using var runScope = _logger.BeginScope(new Dictionary<string, object>
+        {
+            ["RunId"] = runId,
+            ["WindowStartUtc"] = windowStartUtc,
+            ["WindowEndUtc"] = windowEndUtc,
+            ["DryRun"] = _options.DryRun,
+        });
+
+        _logger.LogInformation(
+            "Starting schedule pass (RunId={RunId}) over window ({WindowStartUtc:o}, {WindowEndUtc:o}]; DryRun={DryRun}.",
+            runId, windowStartUtc, windowEndUtc, _options.DryRun);
+
         await foreach (var subscription in GetSubscriptionsAsync(cancellationToken))
         {
             await foreach (var vm in subscription.GetVirtualMachinesAsync(cancellationToken: cancellationToken))
             {
                 scanned++;
+                var name = vm.Id.Name;
+
+                using var vmScope = _logger.BeginScope(new Dictionary<string, object>
+                {
+                    ["VmName"] = name,
+                    ["ResourceGroup"] = vm.Id.ResourceGroupName ?? string.Empty,
+                    ["SubscriptionId"] = vm.Id.SubscriptionId ?? string.Empty,
+                    ["VmId"] = vm.Id.ToString(),
+                });
+
                 var tags = vm.Data.Tags;
                 if (tags is null)
                 {
+                    _logger.LogDebug("VM '{VmName}' has no tags; skipping.", name);
                     continue;
                 }
 
@@ -51,10 +75,11 @@ public sealed class VmScheduleService : IVmScheduleService
 
                 if (!startDue && !stopDue)
                 {
+                    _logger.LogDebug(
+                        "VM '{VmName}' has no AutoStart/AutoStop occurrence due in this window; skipping.",
+                        name);
                     continue;
                 }
-
-                var name = vm.Id.Name;
 
                 if (startDue && stopDue)
                 {
@@ -65,9 +90,18 @@ public sealed class VmScheduleService : IVmScheduleService
                     continue;
                 }
 
+                var action = startDue ? "Start" : "Stop";
+                using var actionScope = _logger.BeginScope(new Dictionary<string, object>
+                {
+                    ["Action"] = action,
+                });
+
                 try
                 {
                     var powerState = await GetPowerStateAsync(vm, cancellationToken);
+                    _logger.LogInformation(
+                        "VM '{VmName}' is due to {Action}; current power state is '{PowerState}'.",
+                        name, action, powerState ?? "unknown");
 
                     if (startDue)
                     {
@@ -117,14 +151,14 @@ public sealed class VmScheduleService : IVmScheduleService
                 catch (Exception ex)
                 {
                     failed++;
-                    _logger.LogError(ex, "Failed to process VM '{VmName}'.", name);
+                    _logger.LogError(ex, "Failed to {Action} VM '{VmName}'.", action, name);
                 }
             }
         }
 
         _logger.LogInformation(
-            "Schedule pass complete. Scanned={Scanned} Started={Started} Stopped={Stopped} Skipped={Skipped} Failed={Failed}.",
-            scanned, started, stopped, skipped, failed);
+            "Schedule pass complete (RunId={RunId}). Scanned={Scanned} Started={Started} Stopped={Stopped} Skipped={Skipped} Failed={Failed}.",
+            runId, scanned, started, stopped, skipped, failed);
 
         return new ScheduleRunSummary(scanned, started, stopped, skipped, failed);
     }
