@@ -5,10 +5,9 @@
     "ghcr.io/devcontainers/features/dotnet:2": {
       "version": "8.0"
     },
-    "ghcr.io/devcontainers/features/azure-cli:1": {},
-    "ghcr.io/jlaundry/devcontainer-features/azure-functions-core-tools:1": {}
+    "ghcr.io/devcontainers/features/azure-cli:1": {}
   },
-  "postCreateCommand": "az bicep install && dotnet restore",
+  "postCreateCommand": "bash .devcontainer/post-create.sh",
   "customizations": {
     "vscode": {
       "extensions": [
