@@ -68,7 +68,7 @@ src/AzVmStartStop.Functions.Tests/   # xUnit tests (cron/time zone + power-state
 infra/main.bicep                     # RG-scoped: identity, storage, plan, App Insights, function
 infra/abbreviations.json             # Azure CAF resource-type abbreviations (azd standard)
 infra/main.sample.bicepparam         # Example parameters (placeholders only)
-.github/workflows/deploy.yml         # Build/test + OIDC deploy
+.github/workflows/ci-cd.yml          # Build/test + OIDC deploy
 docs/                                # Architecture, design decisions, troubleshooting
 ```
 

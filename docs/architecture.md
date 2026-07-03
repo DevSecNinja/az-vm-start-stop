@@ -60,7 +60,7 @@ tags, evaluated in a per-VM (or default) time zone.
 
 ## Deployment
 
-`.github/workflows/deploy.yml`: build + test, then (on `main`) OIDC login,
+`.github/workflows/ci-cd.yml`: build + test, then (on `main`) OIDC login,
 Bicep deploy and function package deploy. Azure steps are run via the **Azure
 CLI** rather than `azure/*` actions (see `docs/decisions.md`). Full setup is in
 [`docs/deployment.md`](deployment.md).

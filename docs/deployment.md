@@ -1,6 +1,6 @@
 # Deployment
 
-The deploy workflow (`.github/workflows/deploy.yml`) builds, tests, and — on
+The deploy workflow (`.github/workflows/ci-cd.yml`) builds, tests, and — on
 `main` — deploys via GitHub OIDC. This guide covers the one-time identity setup
 and the manual deploy path.
 

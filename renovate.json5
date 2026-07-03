@@ -30,7 +30,7 @@
       // 3.x removed Microsoft.ApplicationInsights.Extensibility.ITelemetryInitializer,
       // so ConfigureFunctionsApplicationInsights throws TypeLoadException and the
       // worker aborts at startup (exit code 134). Stay on 2.x until the worker
-      // integration supports AI 3.x.
+      // integration supports AI 3.x. Tracking: #26
       matchDatasources: ["nuget"],
       matchPackageNames: ["Microsoft.ApplicationInsights.WorkerService"],
       allowedVersions: "<3.0.0",
