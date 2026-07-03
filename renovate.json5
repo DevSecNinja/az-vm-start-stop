@@ -13,4 +13,15 @@
     "github>DevSecNinja/.github//.renovate/packageRules.json5",
     "github>DevSecNinja/.github//.renovate/semanticCommits.json5",
   ],
+  packageRules: [
+    {
+      // Microsoft releases this Functions Worker timer-trigger extension
+      // infrequently, so Renovate flags 4.3.1 as "abandoned" by release
+      // inactivity. It is the current, required package for timer triggers —
+      // suppress the abandonment notice so it stops recurring on the dashboard.
+      matchDatasources: ["nuget"],
+      matchPackageNames: ["Microsoft.Azure.Functions.Worker.Extensions.Timer"],
+      abandonmentThreshold: "10 years",
+    },
+  ],
 }
