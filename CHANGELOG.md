@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.1](https://github.com/DevSecNinja/az-vm-start-stop/compare/v1.0.0...v1.0.1) (2026-07-03)
+
+
+### Miscellaneous Chores
+
+* release 1.0.1 ([fc4313d](https://github.com/DevSecNinja/az-vm-start-stop/commit/fc4313d7eb418bdcea272a73fd178ac3d1650751))
+
 ## [1.0.0](https://github.com/DevSecNinja/az-vm-start-stop/compare/v0.1.0...v1.0.0) (2026-07-03)
 
 
