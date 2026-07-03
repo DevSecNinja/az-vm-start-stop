@@ -1,5 +1,11 @@
 # az-vm-start-stop
 
+[![CI/CD](https://github.com/DevSecNinja/az-vm-start-stop/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/DevSecNinja/az-vm-start-stop/actions/workflows/ci-cd.yml)
+[![Lint](https://github.com/DevSecNinja/az-vm-start-stop/actions/workflows/lint.yml/badge.svg)](https://github.com/DevSecNinja/az-vm-start-stop/actions/workflows/lint.yml)
+[![Latest release](https://img.shields.io/github/v/release/DevSecNinja/az-vm-start-stop?sort=semver&logo=github)](https://github.com/DevSecNinja/az-vm-start-stop/releases/latest)
+[![.NET 8](https://img.shields.io/badge/.NET-8.0-512BD4?logo=dotnet&logoColor=white)](https://dotnet.microsoft.com/download/dotnet/8.0)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 Tag-driven **auto-start and auto-stop** for Azure Virtual Machines.
 
 Azure VMs ship with a native _auto-shutdown_ feature but no built-in _auto-start_,
