@@ -1,0 +1,86 @@
+name: Nightly Stability Check
+
+# Verifies the function is actually running: queries Application Insights for
+# recent "Schedule pass complete" traces and fails if none are found in the
+# lookback window. It deliberately does NOT assert that any VM was started or
+# stopped — cron schedules on VM tags aren't guaranteed to fall in the window —
+# only that the function executed its scheduled passes.
+
+on:
+  schedule:
+    - cron: "0 6 * * *" # 06:00 UTC daily
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  # Wider than 24h to tolerate scheduling jitter / missed ticks.
+  LOOKBACK_HOURS: "26"
+
+jobs:
+  stability-check:
+    name: Verify recent function activity
+    runs-on: ubuntu-latest
+    # Reuses the deploy identity's federated credential, whose subject is
+    # scoped to the 'production' environment.
+    environment: production
+    steps:
+      - name: Azure login
+        env:
+          AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
+          AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+          AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+        run: |
+          idToken=$(curl -sS --fail \
+            -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+            "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=api://AzureADTokenExchange" \
+            | jq -r '.value')
+          if [ -z "$idToken" ] || [ "$idToken" = "null" ]; then
+            echo "::error::Failed to obtain a GitHub OIDC token for Azure login."
+            exit 1
+          fi
+          az login --service-principal \
+            --username "$AZURE_CLIENT_ID" \
+            --tenant "$AZURE_TENANT_ID" \
+            --federated-token "$idToken" \
+            --output none
+          az account set --subscription "$AZURE_SUBSCRIPTION_ID"
+
+      - name: Check for recent schedule passes
+        env:
+          AZURE_RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP }}
+        run: |
+          az extension add --name application-insights --only-show-errors
+
+          appName=$(az resource list \
+            --resource-group "$AZURE_RESOURCE_GROUP" \
+            --resource-type Microsoft.Insights/components \
+            --query "[0].name" --output tsv)
+          if [ -z "$appName" ]; then
+            echo "::error::No Application Insights component found in resource group '$AZURE_RESOURCE_GROUP'."
+            exit 1
+          fi
+          echo "Querying Application Insights component '$appName' over the last ${LOOKBACK_HOURS}h..."
+
+          query="traces | where timestamp > ago(${LOOKBACK_HOURS}h) | where message has 'Schedule pass complete' | summarize runs = count(), (lastRun, lastSha) = arg_max(timestamp, tostring(customDimensions.BuildSha))"
+
+          result=$(az monitor app-insights query \
+            --app "$appName" \
+            --resource-group "$AZURE_RESOURCE_GROUP" \
+            --analytics-query "$query" \
+            --offset "${LOOKBACK_HOURS}h" \
+            --output json)
+
+          runs=$(echo "$result" | jq -r '.tables[0].rows[0][0] // 0')
+          lastRun=$(echo "$result" | jq -r '.tables[0].rows[0][1] // "n/a"')
+          lastSha=$(echo "$result" | jq -r '.tables[0].rows[0][2] // "unknown"')
+
+          echo "Schedule passes in last ${LOOKBACK_HOURS}h: ${runs} (last: ${lastRun}, BuildSha: ${lastSha})"
+
+          if [ "${runs:-0}" -lt 1 ]; then
+            echo "::error::No 'Schedule pass complete' traces in the last ${LOOKBACK_HOURS}h — the function may not be running."
+            exit 1
+          fi
+          echo "Stability check passed: ${runs} schedule pass(es) recently; latest running BuildSha=${lastSha}."
