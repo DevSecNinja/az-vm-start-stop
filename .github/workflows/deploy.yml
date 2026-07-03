@@ -82,6 +82,16 @@ jobs:
             --output none
           az account set --subscription "$AZURE_SUBSCRIPTION_ID"
 
+      - name: Verify resource group exists
+        env:
+          AZURE_RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP }}
+        run: |
+          if [ "$(az group exists --name "$AZURE_RESOURCE_GROUP")" != "true" ]; then
+            echo "::error::Resource group '$AZURE_RESOURCE_GROUP' does not exist. This deployment is resource-group scoped and does not create it — pre-create the group first (see docs/deployment.md)."
+            exit 1
+          fi
+          echo "Resource group '$AZURE_RESOURCE_GROUP' found."
+
       - name: Deploy infrastructure (Bicep)
         id: infra
         env:
