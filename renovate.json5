@@ -24,16 +24,16 @@
       abandonmentThreshold: "10 years",
     },
     {
-      // Azure Functions Worker v2 broke the function at runtime on the Linux
-      // Flex Consumption host (scheduled passes stopped executing, caught by the
-      // nightly stability check). Stay on v1 until v2 is verified to run there.
+      // Microsoft.ApplicationInsights.WorkerService 3.x (Application Insights
+      // SDK 3.x) is incompatible with the Functions Worker App Insights
+      // integration (Microsoft.Azure.Functions.Worker.ApplicationInsights): AI
+      // 3.x removed Microsoft.ApplicationInsights.Extensibility.ITelemetryInitializer,
+      // so ConfigureFunctionsApplicationInsights throws TypeLoadException and the
+      // worker aborts at startup (exit code 134). Stay on 2.x until the worker
+      // integration supports AI 3.x.
       matchDatasources: ["nuget"],
-      matchPackageNames: [
-        "Microsoft.Azure.Functions.Worker",
-        "Microsoft.Azure.Functions.Worker.Sdk",
-        "Microsoft.Azure.Functions.Worker.ApplicationInsights",
-      ],
-      allowedVersions: "<2.0.0",
+      matchPackageNames: ["Microsoft.ApplicationInsights.WorkerService"],
+      allowedVersions: "<3.0.0",
     },
   ],
 }
