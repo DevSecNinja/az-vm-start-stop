@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.0](https://github.com/DevSecNinja/az-vm-start-stop/compare/v1.0.1...v1.1.0) (2026-07-04)
+
+
+### Features
+
+* onboard my apm ([d43eadd](https://github.com/DevSecNinja/az-vm-start-stop/commit/d43eaddfb5a64e9e38ffbb9a0bf7568e01ad2b9b))
+
 ## [1.0.1](https://github.com/DevSecNinja/az-vm-start-stop/compare/v1.0.0...v1.0.1) (2026-07-03)
 
 
