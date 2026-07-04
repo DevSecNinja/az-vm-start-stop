@@ -1,0 +1,12 @@
+name: az-vm-start-stop
+version: 1.0.0
+description: APM project for az-vm-start-stop
+author: Jean-Paul van Ravensberg
+targets:
+- copilot
+dependencies:
+  apm:
+  - DevSecNinja/ai-toolkit#v0.7.0
+  mcp: []
+includes: auto
+scripts: {}

@@ -10,3 +10,7 @@ local.settings.json
 ## Rider/VS
 .idea/
 .vs/
+
+
+# APM dependencies
+apm_modules/
