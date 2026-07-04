@@ -31,6 +31,12 @@ jobs:
       vars.AZURE_RESOURCE_GROUP != '' &&
       vars.AZURE_NAME_PREFIX != ''
     runs-on: ubuntu-latest
+    # OIDC federation is scoped to the `production` environment (the federated
+    # credential subject is repo:…:environment:production), so this job must run
+    # there too or the Azure login fails. Kept in a dedicated, least-privilege
+    # workflow — only id-token/contents:read, no publish or deploy rights — so
+    # the third-party ACE binary runs isolated from the CI/CD deploy pipeline.
+    environment: production
     permissions:
       id-token: write
       contents: read
