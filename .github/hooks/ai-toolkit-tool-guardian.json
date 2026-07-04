@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "disableAllHooks": true,
+  "hooks": {
+    "preToolUse": [
+      {
+        "type": "command",
+        "bash": ".github/hooks/scripts/ai-toolkit/scripts/tool-guardian/guard-tool.sh",
+        "cwd": ".",
+        "env": {
+          "GUARD_MODE": "block"
+        },
+        "timeoutSec": 10
+      }
+    ]
+  }
+}
