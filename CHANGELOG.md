@@ -1,5 +1,21 @@
 # Changelog
 
+## [1.2.0](https://github.com/DevSecNinja/az-vm-start-stop/compare/v1.1.0...v1.2.0) (2026-07-24)
+
+
+### Features
+
+* **deps:** update dependency microsoft.net.test.sdk ( 18.7.0 ➔ 18.8.1 ) [automerge] ([#40](https://github.com/DevSecNinja/az-vm-start-stop/issues/40)) ([15c7bc9](https://github.com/DevSecNinja/az-vm-start-stop/commit/15c7bc95c9abef10765e4d4b6db4a6a586f1f56b))
+* **github-release:** update release jdx/mise ( v2026.6.14 ➔ v2026.7.0 ) [automerge] ([#41](https://github.com/DevSecNinja/az-vm-start-stop/issues/41)) ([c41b6f7](https://github.com/DevSecNinja/az-vm-start-stop/commit/c41b6f7fbd48c0586037ca0bec27b1517fa6a1c8))
+* **github-tag:** update tag devsecninja/ai-toolkit ( v0.7.0 ➔ v0.8.0 ) [automerge] ([#35](https://github.com/DevSecNinja/az-vm-start-stop/issues/35)) ([ea9f181](https://github.com/DevSecNinja/az-vm-start-stop/commit/ea9f181c7f36a9602f22c81c4f0880ff1f9f4009))
+
+
+### Bug Fixes
+
+* **deps:** update dotnet monorepo [automerge] ([#39](https://github.com/DevSecNinja/az-vm-start-stop/issues/39)) ([8c211b7](https://github.com/DevSecNinja/az-vm-start-stop/commit/8c211b7bb45489e9e78a539931e8477a4ae97a32))
+* **github-release:** update release jdx/mise ( v2026.6.11 ➔ v2026.6.14 ) [automerge] ([#37](https://github.com/DevSecNinja/az-vm-start-stop/issues/37)) ([59772ec](https://github.com/DevSecNinja/az-vm-start-stop/commit/59772ec0b167a90c89d1e8f9b24760b0deeea290))
+* **github-release:** update release jdx/mise ( v2026.7.0 ➔ v2026.7.5 ) [automerge] ([#43](https://github.com/DevSecNinja/az-vm-start-stop/issues/43)) ([94e267e](https://github.com/DevSecNinja/az-vm-start-stop/commit/94e267e1254d8f712a603fae5336074d4fafc7c8))
+
 ## [1.1.0](https://github.com/DevSecNinja/az-vm-start-stop/compare/v1.0.1...v1.1.0) (2026-07-04)
 
 
