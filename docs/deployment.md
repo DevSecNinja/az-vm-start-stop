@@ -34,7 +34,11 @@ identity `Virtual Machine Contributor` at management-group scope (step 3).
 > The workflow's `deploy` job runs in the GitHub **`production`** environment, so the
 > federated credential's _subject_ must use the `environment:production` form shown
 > below (not a branch subject). Create the environment first under **Settings →
-> Environments → New environment → `production`**.
+> Environments → New environment → `production`**. The PR-time cost-estimator job
+> (`.github/workflows/cost-estimator.yml`) reuses the same OIDC login, so it also runs
+> in the `production` environment — with a minimal `id-token: write` + `contents: read`
+> scope and no deploy rights. Any environment protection rules therefore also gate when
+> the third-party ACE binary runs.
 
 ### Option A — Azure CLI (recommended)
 
