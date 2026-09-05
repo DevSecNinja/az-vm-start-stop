@@ -1,5 +1,35 @@
 # Changelog
 
+## [1.2.0](https://github.com/DevSecNinja/az-vm-start-stop/compare/v1.1.0...v1.2.0) (2026-09-05)
+
+
+### Features
+
+* **deps:** update dependency microsoft.azure.functions.worker.sdk ( 2.0.7 ➔ 2.1.0 ) [automerge] ([#46](https://github.com/DevSecNinja/az-vm-start-stop/issues/46)) ([29a0d06](https://github.com/DevSecNinja/az-vm-start-stop/commit/29a0d060c57e4486011339fd105417d91d1d0acf))
+* **deps:** update dependency microsoft.net.test.sdk ( 18.7.0 ➔ 18.8.1 ) [automerge] ([#40](https://github.com/DevSecNinja/az-vm-start-stop/issues/40)) ([15c7bc9](https://github.com/DevSecNinja/az-vm-start-stop/commit/15c7bc95c9abef10765e4d4b6db4a6a586f1f56b))
+* **github-release:** update release jdx/mise ( v2026.6.14 ➔ v2026.7.0 ) [automerge] ([#41](https://github.com/DevSecNinja/az-vm-start-stop/issues/41)) ([c41b6f7](https://github.com/DevSecNinja/az-vm-start-stop/commit/c41b6f7fbd48c0586037ca0bec27b1517fa6a1c8))
+* **github-release:** update release jdx/mise ( v2026.7.18 ➔ v2026.8.0 ) [automerge] ([#56](https://github.com/DevSecNinja/az-vm-start-stop/issues/56)) ([443544d](https://github.com/DevSecNinja/az-vm-start-stop/commit/443544d686e9eded61180f37e5298df42e3ceb3c))
+* **github-tag:** update tag devsecninja/ai-toolkit ( v0.7.0 ➔ v0.8.0 ) [automerge] ([#35](https://github.com/DevSecNinja/az-vm-start-stop/issues/35)) ([ea9f181](https://github.com/DevSecNinja/az-vm-start-stop/commit/ea9f181c7f36a9602f22c81c4f0880ff1f9f4009))
+* **mise:** update tool zizmor ( 1.26.1 ➔ 1.27.0 ) [automerge] ([#49](https://github.com/DevSecNinja/az-vm-start-stop/issues/49)) ([cbff6db](https://github.com/DevSecNinja/az-vm-start-stop/commit/cbff6dbdf4bda333a5fe7265a3187b918d5acc49))
+* **mise:** update tool zizmor ( 1.27.0 ➔ 1.28.0 ) [automerge] ([#52](https://github.com/DevSecNinja/az-vm-start-stop/issues/52)) ([a557638](https://github.com/DevSecNinja/az-vm-start-stop/commit/a557638895141146f0a6abffeb78059353f1cd4b))
+* **mise:** update tool zizmor ( 1.28.0 ➔ 1.29.0 ) [automerge] ([#57](https://github.com/DevSecNinja/az-vm-start-stop/issues/57)) ([e894c15](https://github.com/DevSecNinja/az-vm-start-stop/commit/e894c15ac4b5695ab8a253d05996d3ce7afa5c0d))
+
+
+### Bug Fixes
+
+* **deps:** update dotnet monorepo [automerge] ([#39](https://github.com/DevSecNinja/az-vm-start-stop/issues/39)) ([8c211b7](https://github.com/DevSecNinja/az-vm-start-stop/commit/8c211b7bb45489e9e78a539931e8477a4ae97a32))
+* **github-release:** update release jdx/mise ( v2026.6.11 ➔ v2026.6.14 ) [automerge] ([#37](https://github.com/DevSecNinja/az-vm-start-stop/issues/37)) ([59772ec](https://github.com/DevSecNinja/az-vm-start-stop/commit/59772ec0b167a90c89d1e8f9b24760b0deeea290))
+* **github-release:** update release jdx/mise ( v2026.7.0 ➔ v2026.7.5 ) [automerge] ([#43](https://github.com/DevSecNinja/az-vm-start-stop/issues/43)) ([94e267e](https://github.com/DevSecNinja/az-vm-start-stop/commit/94e267e1254d8f712a603fae5336074d4fafc7c8))
+* **github-release:** update release jdx/mise ( v2026.7.12 ➔ v2026.7.13 ) [automerge] ([#53](https://github.com/DevSecNinja/az-vm-start-stop/issues/53)) ([06b51f0](https://github.com/DevSecNinja/az-vm-start-stop/commit/06b51f08cd2ceb79bcbd229f3d73d8bd5d0595e0))
+* **github-release:** update release jdx/mise ( v2026.7.13 ➔ v2026.7.14 ) [automerge] ([#54](https://github.com/DevSecNinja/az-vm-start-stop/issues/54)) ([61277ac](https://github.com/DevSecNinja/az-vm-start-stop/commit/61277aced343449e2eb404c8ac0e7079157ea334))
+* **github-release:** update release jdx/mise ( v2026.7.14 ➔ v2026.7.18 ) [automerge] ([#55](https://github.com/DevSecNinja/az-vm-start-stop/issues/55)) ([59bb17a](https://github.com/DevSecNinja/az-vm-start-stop/commit/59bb17a9edfaeb11525cca2ead759ca396189d36))
+* **github-release:** update release jdx/mise ( v2026.7.5 ➔ v2026.7.7 ) [automerge] ([#47](https://github.com/DevSecNinja/az-vm-start-stop/issues/47)) ([d626e1a](https://github.com/DevSecNinja/az-vm-start-stop/commit/d626e1ac311e1dfaf3ed86f7ad650741d617d073))
+* **github-release:** update release jdx/mise ( v2026.7.7 ➔ v2026.7.12 ) [automerge] ([#51](https://github.com/DevSecNinja/az-vm-start-stop/issues/51)) ([091652c](https://github.com/DevSecNinja/az-vm-start-stop/commit/091652cd4fc93d58f804032b814f52aa77990192))
+* **mise:** update tool dprint ( 0.55.1 ➔ 0.55.2 ) [automerge] ([#48](https://github.com/DevSecNinja/az-vm-start-stop/issues/48)) ([2c56bc4](https://github.com/DevSecNinja/az-vm-start-stop/commit/2c56bc44d331022c4f618cc4d998c404c652ceb8))
+* **mise:** update tool lefthook ( 2.1.9 ➔ 2.1.10 ) [automerge] ([#44](https://github.com/DevSecNinja/az-vm-start-stop/issues/44)) ([1d6f554](https://github.com/DevSecNinja/az-vm-start-stop/commit/1d6f554c8ea0ea9c664ded861fe2fc35d585fdad))
+* **mise:** update tool pipx:checkov ( 3.3.6 ➔ 3.3.8 ) [automerge] ([#45](https://github.com/DevSecNinja/az-vm-start-stop/issues/45)) ([4e5a349](https://github.com/DevSecNinja/az-vm-start-stop/commit/4e5a34914ab40b39056566978bde2cdc26b7846f))
+* **mise:** update tool pipx:checkov ( 3.3.8 ➔ 3.3.9 ) [automerge] ([#58](https://github.com/DevSecNinja/az-vm-start-stop/issues/58)) ([01b8c75](https://github.com/DevSecNinja/az-vm-start-stop/commit/01b8c759ff3e1e3242ecc134da0159f8f29de1f8))
+
 ## [1.1.0](https://github.com/DevSecNinja/az-vm-start-stop/compare/v1.0.1...v1.1.0) (2026-07-04)
 
 
