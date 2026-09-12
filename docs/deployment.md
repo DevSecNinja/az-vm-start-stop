@@ -8,7 +8,8 @@ and the manual deploy path.
 
 The deployment is **resource-group scoped** so the CI identity needs only **Owner on a
 single, pre-created resource group** — no subscription- or management-group-level
-rights.
+rights. Add the [role-assignment condition](#deployment-role-assignment-condition)
+below to constrain which roles it can assign and to which principal types.
 
 - **No secrets in this repo.** Deployment authenticates with GitHub OIDC federated
   credentials; the running function uses a **user-assigned managed identity** (created
@@ -35,6 +36,38 @@ identity `Virtual Machine Contributor` at management-group scope (step 3).
 > federated credential's _subject_ must use the `environment:production` form shown
 > below (not a branch subject). Create the environment first under **Settings →
 > Environments → New environment → `production`**.
+
+### Deployment role-assignment condition
+
+When granting the deployment identity **Owner** on the pre-created resource group,
+choose **Allow user to only assign selected roles to selected principals (fewer
+privileges)**. Click **Select roles and principals** and use:
+
+| Setting                    | Value                                               |
+| -------------------------- | --------------------------------------------------- |
+| Condition                  | Preconfigured (Constrain roles and principal types) |
+| Assignable roles           | Storage Blob Data Owner                             |
+| Assignable principal types | `ServicePrincipal`                                  |
+
+Managed identities are service principals. This allows the deployment to create
+and remove the function identity's `Storage Blob Data Owner` assignment on its
+storage account, the only role assignment created by `infra/main.bicep`. Use the
+principal **type**, not a specific principal ID: the function's managed identity
+is created during deployment and gets a new principal ID if deleted and recreated.
+The recipient is the function identity, not the GitHub deployment identity.
+
+Keep the Owner assignment at **resource-group scope**. The condition constrains
+role-assignment management; it does not restrict Owner's other resource-management
+permissions within that scope. Do not add Owner, User Access Administrator, Role
+Based Access Control Administrator, or Virtual Machine Contributor to the
+assignable roles. An administrator grants the function's VM permissions separately
+after deployment.
+
+For an existing Owner assignment, edit its condition under the resource group's
+**Access control (IAM) → Role assignments**. The CLI example below creates the
+assignment with the equivalent condition, covering both role-assignment creation
+and deletion. See Microsoft's
+[role-and-principal-type condition example](https://learn.microsoft.com/azure/role-based-access-control/delegate-role-assignments-examples#example-constrain-acr-management).
 
 ### Option A — Azure CLI (recommended)
 
@@ -65,14 +98,33 @@ az ad app federated-credential create --id "$APP_ID" --parameters '{
   "audiences": ["api://AzureADTokenExchange"]
 }'
 
-# 3) Grant the deploy identity Owner on ONLY the resource group. RG Owner can create
-#    the resources plus the in-RG storage role assignment — nothing above the RG.
+# 3) Grant Owner on ONLY the resource group, with constrained role delegation.
+#    b7e6dc6d-f1e8-4753-8033-0f276bb0955b is Storage Blob Data Owner.
 SP_OBJECT_ID=$(az ad sp show --id "$APP_ID" --query id -o tsv)
+ROLE_ASSIGNMENT_CONDITION="(
+    (!(ActionMatches{'Microsoft.Authorization/roleAssignments/write'}))
+    OR (
+        @Request[Microsoft.Authorization/roleAssignments:RoleDefinitionId] ForAnyOfAnyValues:GuidEquals {b7e6dc6d-f1e8-4753-8033-0f276bb0955b}
+        AND
+        @Request[Microsoft.Authorization/roleAssignments:PrincipalType] ForAnyOfAnyValues:StringEqualsIgnoreCase {'ServicePrincipal'}
+    )
+)
+AND
+(
+    (!(ActionMatches{'Microsoft.Authorization/roleAssignments/delete'}))
+    OR (
+        @Resource[Microsoft.Authorization/roleAssignments:RoleDefinitionId] ForAnyOfAnyValues:GuidEquals {b7e6dc6d-f1e8-4753-8033-0f276bb0955b}
+        AND
+        @Resource[Microsoft.Authorization/roleAssignments:PrincipalType] ForAnyOfAnyValues:StringEqualsIgnoreCase {'ServicePrincipal'}
+    )
+)"
 az role assignment create \
-  --assignee-object-id "$SP_OBJECT_ID" \
-  --assignee-principal-type ServicePrincipal \
-  --role "Owner" \
-  --scope "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$RESOURCE_GROUP"
+    --assignee-object-id "$SP_OBJECT_ID" \
+    --assignee-principal-type ServicePrincipal \
+    --role "Owner" \
+    --scope "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$RESOURCE_GROUP" \
+    --condition "$ROLE_ASSIGNMENT_CONDITION" \
+    --condition-version "2.0"
 
 # 4) Print the ids you need for the GitHub variables below
 echo "AZURE_CLIENT_ID=$APP_ID"
@@ -117,6 +169,9 @@ az role assignment create \
    `api://AzureADTokenExchange`.
 3. Pre-create the resource group, then **RG → Access control (IAM) → Add role
    assignment** → assign **Owner** to the app's service principal (RG scope only).
+   Before saving, configure the
+   [deployment role-assignment condition](#deployment-role-assignment-condition):
+   **Storage Blob Data Owner** assignable only to **`ServicePrincipal`**.
 4. After the first deploy, at the **management group** (or subscription) → **Access
    control (IAM)** → assign **Virtual Machine Contributor** to the function's
    user-assigned identity.
