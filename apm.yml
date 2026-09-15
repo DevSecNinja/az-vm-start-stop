@@ -6,7 +6,7 @@ targets:
 - copilot
 dependencies:
   apm:
-  - DevSecNinja/ai-toolkit#v0.8.0
+  - DevSecNinja/ai-toolkit#2491cedec727e722a7751ff516ae7b7c95de922b # v0.8.0
   mcp: []
 includes: auto
 scripts: {}
