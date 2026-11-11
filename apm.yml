@@ -6,7 +6,10 @@ targets:
 - copilot
 dependencies:
   apm:
-  - DevSecNinja/ai-toolkit#v0.8.0
+  - DevSecNinja/ai-toolkit/.apm/instructions/devsecninja-conventions.instructions.md#v0.9.1
+  - DevSecNinja/ai-toolkit/.apm/instructions/untrusted-repositories.instructions.md#v0.9.1
+  - DevSecNinja/ai-toolkit/.apm/instructions/writing-style.instructions.md#v0.9.1
+  - DevSecNinja/ai-toolkit/.apm/skills/renovate-triage-and-merge#v0.9.1
   mcp: []
 includes: auto
 scripts: {}
