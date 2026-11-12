@@ -5,3 +5,11 @@
 # Microsoft.ApplicationInsights.WorkerService < 3.0.0), so we manage it locally
 # instead of letting config-sync overwrite it with the central template.
 renovate.json5
+
+# APM (from DevSecNinja/ai-toolkit) deploys and updates these instruction
+# files. This repo pins an older config-sync that syncs from DevSecNinja/.github
+# main without an APM-aware skip, so keep it from overwriting them.
+# See https://github.com/DevSecNinja/repo-steward/issues/36
+.github/instructions/devsecninja-conventions.instructions.md
+.github/instructions/untrusted-repositories.instructions.md
+.github/instructions/writing-style.instructions.md
