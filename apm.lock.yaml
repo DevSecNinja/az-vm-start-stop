@@ -1,5 +1,5 @@
 lockfile_version: '1'
-generated_at: '2026-11-11T20:16:55.232608+00:00'
+generated_at: '2026-11-12T08:31:55.929683+00:00'
 apm_version: 0.35.0
 dependencies:
 - repo_url: devsecninja/ai-toolkit
@@ -73,22 +73,6 @@ dependencies:
     .agents/skills/renovate-triage-and-merge/references/testing.md: sha256:1b91d6596dde5d65643efb78b30ebc308ac77984c4b1a94e8188d05b4b0e901f
     .agents/skills/renovate-triage-and-merge/scripts/renovate_prs.py: sha256:724dbda09f1cdb491a3e8e7700429e48b3ecdbb986b7885278944850e8779fbc
   content_hash: sha256:8e402686c02d7df870c7128da7f3ae2659eda8e8ca6d4753d330c1b52e74e2c9
-- repo_url: github/awesome-copilot
-  name: awesome-copilot-sast-sca-security-analyzer
-  host: github.com
-  resolved_commit: 3e36d367091a1e67b77974cade6f1aa48bc77a81
-  resolved_ref: 3e36d367091a1e67b77974cade6f1aa48bc77a81
-  version: 1.0.0
-  virtual_path: agents/sast-sca-security-analyzer.agent.md
-  is_virtual: true
-  depth: 2
-  resolved_by: DevSecNinja/ai-toolkit
-  package_type: apm_package
-  deployed_files:
-  - .github/agents/sast-sca-security-analyzer.agent.md
-  deployed_file_hashes:
-    .github/agents/sast-sca-security-analyzer.agent.md: sha256:5980dc5817b48eea6f88d25f847fcac11b3131f5f9444856bfda243d2c808518
-  content_hash: sha256:50fdb7762c88ce0d470ad9d9158a1769abb060cfb62c7377f446428577e72198
 deployments:
 - kind: project-relative
   target: copilot
@@ -153,15 +137,6 @@ deployments:
   - devsecninja/ai-toolkit/.apm/skills/renovate-triage-and-merge
   active_owner: devsecninja/ai-toolkit/.apm/skills/renovate-triage-and-merge
   content_hash: sha256:724dbda09f1cdb491a3e8e7700429e48b3ecdbb986b7885278944850e8779fbc
-- kind: project-relative
-  target: copilot
-  value: .github/agents/sast-sca-security-analyzer.agent.md
-  runtime: null
-  scope: project
-  owners:
-  - github/awesome-copilot/agents/sast-sca-security-analyzer.agent.md
-  active_owner: github/awesome-copilot/agents/sast-sca-security-analyzer.agent.md
-  content_hash: sha256:5980dc5817b48eea6f88d25f847fcac11b3131f5f9444856bfda243d2c808518
 - kind: project-relative
   target: copilot
   value: .github/instructions/devsecninja-conventions.instructions.md
