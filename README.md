@@ -2,6 +2,7 @@
 
 [![CI/CD](https://github.com/DevSecNinja/az-vm-start-stop/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/DevSecNinja/az-vm-start-stop/actions/workflows/ci-cd.yml)
 [![Lint](https://github.com/DevSecNinja/az-vm-start-stop/actions/workflows/lint.yml/badge.svg)](https://github.com/DevSecNinja/az-vm-start-stop/actions/workflows/lint.yml)
+[![Cost Estimator](https://github.com/DevSecNinja/az-vm-start-stop/actions/workflows/cost-estimator.yml/badge.svg)](https://github.com/DevSecNinja/az-vm-start-stop/actions/workflows/cost-estimator.yml)
 [![Latest release](https://img.shields.io/github/v/release/DevSecNinja/az-vm-start-stop?sort=semver&logo=github)](https://github.com/DevSecNinja/az-vm-start-stop/releases/latest)
 [![.NET 8](https://img.shields.io/badge/.NET-8.0-512BD4?logo=dotnet&logoColor=white)](https://dotnet.microsoft.com/download/dotnet/8.0)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
@@ -75,6 +76,7 @@ infra/main.bicep                     # RG-scoped: identity, storage, plan, App I
 infra/abbreviations.json             # Azure CAF resource-type abbreviations (azd standard)
 infra/main.sample.bicepparam         # Example parameters (placeholders only)
 .github/workflows/ci-cd.yml          # Build/test + OIDC deploy
+.github/workflows/cost-estimator.yml # PR-time Azure cost estimate for infra changes
 docs/                                # Architecture, design decisions, troubleshooting
 ```
 
@@ -91,6 +93,10 @@ docs/                                # Architecture, design decisions, troublesh
 dotnet build -c Release
 dotnet test -c Release
 ```
+
+Infrastructure pull requests that touch `infra/**` also run the **Cost
+Estimator** workflow, which uses the repo's GitHub OIDC Azure identity and
+publishes an ACE (Azure Cost Estimator) Markdown summary for `infra/main.bicep`.
 
 Run the function locally with the [Azure Functions Core Tools](https://learn.microsoft.com/azure/azure-functions/functions-run-local):
 
