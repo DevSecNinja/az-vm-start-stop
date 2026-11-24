@@ -202,3 +202,14 @@ az deployment group create \
 
 func azure functionapp publish <functionAppName>
 ```
+
+### Deploying a release package
+
+From the next release on, each GitHub Release has an `azvmstartstop-vX.Y.Z.zip`
+function package with a signed build-provenance attestation (v1.1.0 and
+earlier have none). Before deploying or rolling back with it, check that this
+repository's release workflow built it:
+
+```bash
+gh attestation verify azvmstartstop-vX.Y.Z.zip --repo DevSecNinja/az-vm-start-stop
+```

@@ -10,8 +10,7 @@ on:
     types:
       - published
 
-permissions:
-  contents: write
+permissions: {}
 
 env:
   FUNCTIONS_PROJECT: src/AzVmStartStop.Functions
@@ -20,6 +19,10 @@ jobs:
   attach-package:
     name: Attach function package
     runs-on: ubuntu-latest
+    permissions:
+      contents: write # Upload the package to the release.
+      id-token: write # Mint the OIDC token for the Sigstore signing certificate.
+      attestations: write # Store the build-provenance attestation for this repo.
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -39,6 +42,13 @@ jobs:
         run: |
           dotnet publish "${FUNCTIONS_PROJECT}" -c Release -o ./publish -p:SourceRevisionId="${REVISION}"
           (cd publish && zip -r "../azvmstartstop-${TAG}.zip" .)
+
+      # Signed build provenance for the package, verifiable after download with:
+      #   gh attestation verify azvmstartstop-vX.Y.Z.zip --repo DevSecNinja/az-vm-start-stop
+      - name: Attest package build provenance
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-path: azvmstartstop-${{ github.event.release.tag_name }}.zip
 
       - name: Upload package to release
         env:
